@@ -153,10 +153,6 @@ Download diagnostics from **Settings → Devices & services → Template Entity 
 - Jinja is not rendered or semantically executed. Conservative static extraction intentionally misses indirect references.
 - Very large findings may approach Home Assistant's state-attribute size limits. Export and Repairs support are future work.
 
-## Reproducible tests without hardware
-
-See [`documentation/testbeispiele-ohne-hardware.md`](documentation/testbeispiele-ohne-hardware.md) for UI-created fixtures covering missing sensors, climate entities, locks, lights, binary sensors, switches, groups, duplicate occurrences, dynamic references, and a fully simulated controllable lock.
-
 ## Development
 
 Requires Python 3.14.2 or newer and [uv](https://docs.astral.sh/uv/).

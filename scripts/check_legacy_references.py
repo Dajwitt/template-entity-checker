@@ -12,10 +12,6 @@ FORBIDDEN = (
     "dashboard-entity-checker",
 )
 ALLOWED = {
-    Path("documentation/phase-1-analyse.md"),
-    Path("documentation/architekturentscheidungen.md"),
-    Path("documentation/qualitaetsbericht.md"),
-    Path("documentation/repository-und-implementierung.md"),
     Path("scripts/check_legacy_references.py"),
 }
 SKIP_PARTS = {".git", ".venv", "__pycache__", ".pytest_cache", ".mypy_cache"}
