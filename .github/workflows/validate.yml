@@ -1,0 +1,27 @@
+name: Home Assistant validation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: home-assistant/actions/hassfest@master
+      - uses: hacs/action@main
+        with:
+          category: integration
+      - name: Validate JSON
+        run: |
+          python -m json.tool custom_components/template_entity_checker/manifest.json >/dev/null
+          python -m json.tool custom_components/template_entity_checker/strings.json >/dev/null
+          python -m json.tool custom_components/template_entity_checker/translations/en.json >/dev/null
+          python -m json.tool custom_components/template_entity_checker/translations/de.json >/dev/null
+          python -m json.tool hacs.json >/dev/null

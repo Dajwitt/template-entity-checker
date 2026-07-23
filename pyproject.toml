@@ -1,0 +1,60 @@
+[build-system]
+requires = ["setuptools>=75.8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "template-entity-checker"
+version = "0.1.0"
+description = "Find missing static entity references in UI-created Home Assistant Template Helpers"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.14.2"
+
+[project.optional-dependencies]
+test = [
+  "homeassistant==2026.7.2",
+  "pytest>=8.3",
+  "pytest-asyncio>=0.25",
+  "pytest-cov>=6.0",
+  "pytest-homeassistant-custom-component>=0.13.300",
+  "ruff>=0.11",
+  "mypy>=1.15",
+  "homeassistant-stubs==2026.7.2"
+]
+
+[tool.setuptools.packages.find]
+include = ["custom_components*"]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "-ra"
+
+[tool.coverage.run]
+source = ["custom_components/template_entity_checker"]
+omit = ["custom_components/template_entity_checker/config_flow.py"]
+
+[tool.coverage.report]
+fail_under = 90
+show_missing = true
+skip_covered = true
+
+[tool.ruff]
+target-version = "py313"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "ASYNC", "SIM", "RUF"]
+
+[tool.mypy]
+python_version = "3.14"
+check_untyped_defs = true
+disallow_untyped_defs = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+no_implicit_optional = true
+ignore_missing_imports = true
+exclude = ["tests/"]

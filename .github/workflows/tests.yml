@@ -1,0 +1,30 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.14"
+          enable-cache: true
+      - name: Install dependencies
+        run: uv sync --extra test
+      - name: Ruff
+        run: uv run ruff check custom_components tests scripts
+      - name: Mypy
+        run: uv run mypy custom_components/template_entity_checker
+      - name: Tests and coverage
+        run: uv run pytest -q --cov=custom_components/template_entity_checker --cov-report=term-missing --cov-fail-under=90
+      - name: Check predecessor references
+        run: uv run python scripts/check_legacy_references.py
