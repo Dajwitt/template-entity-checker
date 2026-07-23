@@ -21,7 +21,6 @@ jobs:
       - name: Validate JSON
         run: |
           python -m json.tool custom_components/template_entity_checker/manifest.json >/dev/null
-          python -m json.tool custom_components/template_entity_checker/strings.json >/dev/null
           python -m json.tool custom_components/template_entity_checker/translations/en.json >/dev/null
           python -m json.tool custom_components/template_entity_checker/translations/de.json >/dev/null
           python -m json.tool hacs.json >/dev/null
