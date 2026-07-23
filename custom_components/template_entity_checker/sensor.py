@@ -62,9 +62,7 @@ class TemplateEntityCheckerSensor(CoordinatorEntity, SensorEntity):
             "status": "update_failed" if failed else data.get("status", "waiting"),
             "complete": False if failed else data.get("complete", False),
             "scan_interval_minutes": self.coordinator.scan_interval_minutes,
-            "template_types": data.get(
-                "template_types", sorted(self.coordinator.template_types)
-            ),
+            "template_types_scanned": data.get("template_types_scanned", []),
             "sources_scanned": data.get("sources_scanned", 0),
             "references_checked": data.get("references_checked", 0),
             "missing_entities": data.get("missing_entities", {}),

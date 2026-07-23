@@ -1,8 +1,54 @@
 {
   "title": "Template Entity Checker",
-  "config": {"step": {"user": {"title": "Template Entity Checker", "description": "Prüft über die Benutzeroberfläche angelegte Template-Helfer auf statische Referenzen zu fehlenden Entities.", "data": {"scan_interval": "Prüfintervall (Minuten)", "notifications": "Persistente Benachrichtigungen", "template_types": "Template-Helfer-Typen", "ignored_entities": "Exakt zu ignorierende Entity-IDs"}, "data_description": {"ignored_entities": "Eine exakte Entity-ID pro Zeile. Platzhalter werden nicht unterstützt."}}}, "error": {"invalid_entity_id": "Mindestens eine ignorierte Entity-ID ist ungültig.", "no_template_type_selected": "Wähle mindestens einen Template-Helfer-Typ."}, "abort": {"single_instance_allowed": "Es wird nur eine Instanz unterstützt."}},
-  "options": {"step": {"init": {"title": "Optionen für Template Entity Checker", "data": {"scan_interval": "Prüfintervall (Minuten)", "notifications": "Persistente Benachrichtigungen", "template_types": "Template-Helfer-Typen", "ignored_entities": "Exakt zu ignorierende Entity-IDs"}, "data_description": {"ignored_entities": "Eine exakte Entity-ID pro Zeile. Platzhalter werden nicht unterstützt."}}}, "error": {"invalid_entity_id": "Mindestens eine ignorierte Entity-ID ist ungültig.", "no_template_type_selected": "Wähle mindestens einen Template-Helfer-Typ."}},
-  "selector": {"template_types": {"options": {"alarm_control_panel": "Alarmzentrale", "binary_sensor": "Binärsensor", "button": "Button", "cover": "Abdeckung", "device_tracker": "Geräte-Tracker", "event": "Ereignis", "fan": "Ventilator", "image": "Bild", "light": "Licht", "lock": "Schloss", "number": "Zahl", "select": "Auswahl", "sensor": "Sensor", "switch": "Schalter", "update": "Update", "vacuum": "Staubsauger", "weather": "Wetter"}}},
-  "services": {"scan_now": {"name": "Jetzt prüfen", "description": "Prüft sofort alle ausgewählten UI-basierten Template-Helfer."}},
-  "exceptions": {"not_loaded": {"message": "Template Entity Checker ist nicht geladen."}}
+  "config": {
+    "step": {
+      "user": {
+        "title": "Template Entity Checker",
+        "description": "Prüft alle über die Benutzeroberfläche angelegten Template-Helfer auf statische Referenzen zu fehlenden Entities.",
+        "data": {
+          "scan_interval": "Prüfintervall (Minuten)",
+          "notifications": "Persistente Benachrichtigungen",
+          "ignored_entities": "Exakt zu ignorierende Entity-IDs"
+        },
+        "data_description": {
+          "ignored_entities": "Eine exakte Entity-ID pro Zeile. Platzhalter werden nicht unterstützt."
+        }
+      }
+    },
+    "error": {
+      "invalid_entity_id": "Mindestens eine ignorierte Entity-ID ist ungültig."
+    },
+    "abort": {
+      "single_instance_allowed": "Es wird nur eine Instanz unterstützt."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Optionen für Template Entity Checker",
+        "data": {
+          "scan_interval": "Prüfintervall (Minuten)",
+          "notifications": "Persistente Benachrichtigungen",
+          "ignored_entities": "Exakt zu ignorierende Entity-IDs"
+        },
+        "data_description": {
+          "ignored_entities": "Eine exakte Entity-ID pro Zeile. Platzhalter werden nicht unterstützt."
+        }
+      }
+    },
+    "error": {
+      "invalid_entity_id": "Mindestens eine ignorierte Entity-ID ist ungültig."
+    }
+  },
+  "services": {
+    "scan_now": {
+      "name": "Jetzt prüfen",
+      "description": "Prüft sofort alle UI-basierten Template-Helfer."
+    }
+  },
+  "exceptions": {
+    "not_loaded": {
+      "message": "Template Entity Checker ist nicht geladen."
+    }
+  }
 }

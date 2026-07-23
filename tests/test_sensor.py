@@ -14,12 +14,12 @@ class Coordinator:
             "ignored_matches": {},
             "parser_diagnostics": [],
             "load_errors": [],
+            "template_types_scanned": ["sensor"],
             "last_scan": "2026-07-23T12:00:00+00:00",
         }
         self.last_update_success = True
         self.last_exception = None
         self.scan_interval_minutes = 15
-        self.template_types = {"sensor"}
         self.ignored_entities = []
 
     def async_add_listener(self, update_callback, context=None):
@@ -35,3 +35,4 @@ def test_sensor_state_and_attributes():
     assert attributes["missing_entities"] == {"sensor.missing": []}
     assert attributes["complete"] is True
     assert attributes["load_errors"] == []
+    assert attributes["template_types_scanned"] == ["sensor"]

@@ -11,7 +11,7 @@ It never renders or changes templates, never repairs references, never guesses d
 ## Version 0.1.0 scope
 
 - UI-created Template Helpers represented by Home Assistant `template` Config Entries
-- all current UI Template Helper types, selectable in Options
+- all UI-created Template Helper types are scanned automatically
 - automatic scan after Home Assistant has fully started
 - configurable interval from 1 to 1440 minutes
 - manual `template_entity_checker.scan_now` action
@@ -76,7 +76,6 @@ The Config Flow and Options Flow provide:
 
 - scan interval;
 - persistent notification toggle;
-- selected Template Helper types;
 - exact ignored entity IDs, one per line.
 
 Wildcards are intentionally not supported.
@@ -92,7 +91,7 @@ The state is the count of unique missing, non-ignored entities. Attributes inclu
 - `ignored_matches`
 - `parser_diagnostics`
 - `load_errors`
-- `template_types`
+- `template_types_scanned`
 - `sources_scanned`
 - `references_checked`
 - `last_scan`

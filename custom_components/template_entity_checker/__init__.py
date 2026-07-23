@@ -12,6 +12,7 @@ from .const import DOMAIN, PLATFORMS, SERVICE_SCAN_NOW
 from .coordinator import TemplateEntityCheckerCoordinator
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+LEGACY_TEMPLATE_TYPES_KEY = "template_types"
 
 
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
@@ -64,6 +65,24 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         entry.async_on_unload(_remove_pending_listener)
 
     entry.async_on_unload(entry.add_update_listener(_async_update_options))
+    return True
+
+
+async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Remove the retired Template Helper type selection from existing entries."""
+    if entry.version > 2:
+        return False
+    if entry.version < 2:
+        data = dict(entry.data)
+        options = dict(entry.options)
+        data.pop(LEGACY_TEMPLATE_TYPES_KEY, None)
+        options.pop(LEGACY_TEMPLATE_TYPES_KEY, None)
+        hass.config_entries.async_update_entry(
+            entry,
+            data=data,
+            options=options,
+            version=2,
+        )
     return True
 
 

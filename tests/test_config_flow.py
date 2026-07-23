@@ -7,7 +7,6 @@ from custom_components.template_entity_checker.const import (
     CONF_IGNORED_ENTITIES,
     CONF_NOTIFICATIONS,
     CONF_SCAN_INTERVAL,
-    CONF_TEMPLATE_TYPES,
     DOMAIN,
 )
 
@@ -22,15 +21,14 @@ async def test_config_flow_creates_entry(hass):
         {
             CONF_SCAN_INTERVAL: 15,
             CONF_NOTIFICATIONS: True,
-            CONF_TEMPLATE_TYPES: ["sensor", "binary_sensor"],
             CONF_IGNORED_ENTITIES: "sensor.ignored",
         },
     )
     assert result["type"] is data_entry_flow.FlowResultType.CREATE_ENTRY
-    assert result["data"][CONF_TEMPLATE_TYPES] == ["sensor", "binary_sensor"]
+    assert "template_types" not in result["data"]
 
 
-async def test_config_flow_rejects_dynamic_ignore_and_empty_types(hass):
+async def test_config_flow_rejects_dynamic_ignore(hass):
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": config_entries.SOURCE_USER}
     )
@@ -39,14 +37,10 @@ async def test_config_flow_rejects_dynamic_ignore_and_empty_types(hass):
         {
             CONF_SCAN_INTERVAL: 15,
             CONF_NOTIFICATIONS: True,
-            CONF_TEMPLATE_TYPES: [],
             CONF_IGNORED_ENTITIES: "sensor.*",
         },
     )
-    assert result["errors"] == {
-        CONF_TEMPLATE_TYPES: "no_template_type_selected",
-        CONF_IGNORED_ENTITIES: "invalid_entity_id",
-    }
+    assert result["errors"] == {CONF_IGNORED_ENTITIES: "invalid_entity_id"}
 
 
 async def test_single_instance_abort(hass):
@@ -64,7 +58,7 @@ async def test_options_flow_updates_settings(hass):
         data={
             CONF_SCAN_INTERVAL: 15,
             CONF_NOTIFICATIONS: True,
-            CONF_TEMPLATE_TYPES: ["sensor"],
+            "template_types": ["sensor"],
             CONF_IGNORED_ENTITIES: "",
         },
     )
@@ -75,9 +69,9 @@ async def test_options_flow_updates_settings(hass):
         {
             CONF_SCAN_INTERVAL: 30,
             CONF_NOTIFICATIONS: False,
-            CONF_TEMPLATE_TYPES: ["binary_sensor"],
             CONF_IGNORED_ENTITIES: "sensor.ignored",
         },
     )
     assert result["type"] is data_entry_flow.FlowResultType.CREATE_ENTRY
     assert result["data"][CONF_SCAN_INTERVAL] == 30
+    assert "template_types" not in result["data"]

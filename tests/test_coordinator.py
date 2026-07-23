@@ -152,7 +152,6 @@ async def test_full_scan_separates_results_and_updates_notification(hass, monkey
         data={
             "scan_interval": 15,
             "notifications": True,
-            "template_types": ["sensor"],
             "ignored_entities": "sensor.ignored",
         },
     )
@@ -169,7 +168,7 @@ async def test_full_scan_separates_results_and_updates_notification(hass, monkey
     monkeypatch.setattr(
         coordinator_module,
         "load_template_sources",
-        lambda _hass, _types: ([scan_source], []),
+        lambda _hass: ([scan_source], []),
     )
     notifications = []
     monkeypatch.setattr(
@@ -186,6 +185,7 @@ async def test_full_scan_separates_results_and_updates_notification(hass, monkey
     assert list(result["ignored_matches"]) == ["sensor.ignored"]
     assert result["parser_diagnostics"][0]["code"] == "dynamic_entity_reference"
     assert result["load_errors"] == []
+    assert result["template_types_scanned"] == ["sensor"]
     assert result["missing_entities"]["sensor.missing"][0]["source_id"] == ("helper-id")
     assert notifications[0][1] is True
 
@@ -201,7 +201,7 @@ async def test_partial_source_failure_preserves_notification(hass, monkeypatch):
     monkeypatch.setattr(
         coordinator_module,
         "load_template_sources",
-        lambda _hass, _types: (
+        lambda _hass: (
             [],
             [SourceLoadError("broken-id", "Broken helper", "bad schema")],
         ),

@@ -37,7 +37,7 @@ class FakeEntry:
 
 
 def test_sources_include_metadata_and_nested_field_path():
-    sources = _sources_from_entry(FakeEntry(), {"sensor"})
+    sources = _sources_from_entry(FakeEntry())
     assert [(item.template_field, item.source_id) for item in sources] == [
         ("state", "entry-1"),
         ("additional_options.availability", "entry-1"),
@@ -46,8 +46,16 @@ def test_sources_include_metadata_and_nested_field_path():
     assert all(item.source_type == "template_helper" for item in sources)
 
 
-def test_unselected_type_is_skipped():
-    assert _sources_from_entry(FakeEntry(), {"binary_sensor"}) == []
+def test_every_template_helper_type_is_scanned():
+    entry = FakeEntry(
+        options={
+            "name": "Simulated lock",
+            "template_type": "lock",
+            "state": "{{ is_state('binary_sensor.simulated_lock', 'on') }}",
+        }
+    )
+    sources = _sources_from_entry(entry)
+    assert [item.template_type for item in sources] == ["lock"]
 
 
 def test_missing_template_type_becomes_load_error():
@@ -55,7 +63,7 @@ def test_missing_template_type_becomes_load_error():
     hass = SimpleNamespace(
         config_entries=SimpleNamespace(async_entries=lambda domain: [entry])
     )
-    sources, errors = load_template_sources(hass, {"sensor"})
+    sources, errors = load_template_sources(hass)
     assert sources == []
     assert errors[0].source_id == "entry-1"
     assert "template_type" in errors[0].error
@@ -69,7 +77,7 @@ def test_list_fields_have_stable_paths():
             "attributes": ["{{ states('sensor.one') }}", "plain text"],
         }
     )
-    sources = _sources_from_entry(entry, {"sensor"})
+    sources = _sources_from_entry(entry)
     assert [item.template_field for item in sources] == ["attributes[0]"]
 
 
@@ -83,7 +91,7 @@ def test_stable_2026_7_advanced_options_schema_is_supported():
             "advanced_options": {"availability": "{{ states('sensor.stable') }}"},
         },
     )
-    sources = _sources_from_entry(entry, {"sensor"})
+    sources = _sources_from_entry(entry)
     assert [item.template_field for item in sources] == [
         "advanced_options.availability"
     ]
@@ -94,6 +102,6 @@ def test_unknown_future_entry_schema_becomes_load_error():
     hass = SimpleNamespace(
         config_entries=SimpleNamespace(async_entries=lambda domain: [entry])
     )
-    sources, errors = load_template_sources(hass, {"sensor"})
+    sources, errors = load_template_sources(hass)
     assert sources == []
     assert errors[0].error == "Unsupported Template Helper config entry schema 3.0"

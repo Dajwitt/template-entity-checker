@@ -6,11 +6,10 @@ import pytest
 from homeassistant.exceptions import HomeAssistantError
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.template_entity_checker import async_setup
+from custom_components.template_entity_checker import async_migrate_entry, async_setup
 from custom_components.template_entity_checker.const import (
     CONF_NOTIFICATIONS,
     CONF_SCAN_INTERVAL,
-    CONF_TEMPLATE_TYPES,
     DOMAIN,
     SERVICE_SCAN_NOW,
 )
@@ -37,7 +36,6 @@ async def test_real_config_entry_setup_creates_expected_sensor(hass):
         data={
             CONF_SCAN_INTERVAL: 15,
             CONF_NOTIFICATIONS: False,
-            CONF_TEMPLATE_TYPES: ["sensor"],
         },
     )
     entry.add_to_hass(hass)
@@ -50,3 +48,18 @@ async def test_real_config_entry_setup_creates_expected_sensor(hass):
     assert state.state == "0"
     assert state.attributes["status"] == "ok"
     assert state.attributes["complete"] is True
+
+
+async def test_migration_removes_legacy_template_type_selection(hass):
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        version=1,
+        data={CONF_SCAN_INTERVAL: 15, "template_types": ["sensor"]},
+        options={CONF_NOTIFICATIONS: True, "template_types": ["binary_sensor"]},
+    )
+    entry.add_to_hass(hass)
+
+    assert await async_migrate_entry(hass, entry)
+    assert entry.version == 2
+    assert "template_types" not in entry.data
+    assert "template_types" not in entry.options

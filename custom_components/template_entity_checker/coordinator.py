@@ -21,11 +21,9 @@ from .const import (
     CONF_IGNORED_ENTITIES,
     CONF_NOTIFICATIONS,
     CONF_SCAN_INTERVAL,
-    CONF_TEMPLATE_TYPES,
     DEFAULT_IGNORED_ENTITIES,
     DEFAULT_NOTIFICATIONS,
     DEFAULT_SCAN_INTERVAL,
-    DEFAULT_TEMPLATE_TYPES,
     DOMAIN,
     EVENT_RESULT_CHANGED,
 )
@@ -49,9 +47,6 @@ class TemplateEntityCheckerCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             settings.get(CONF_NOTIFICATIONS, DEFAULT_NOTIFICATIONS)
         )
         self.ignored_entities = _configured_ignored_entities(settings)
-        self.template_types = set(
-            settings.get(CONF_TEMPLATE_TYPES, DEFAULT_TEMPLATE_TYPES)
-        )
         self._configured_interval = timedelta(minutes=interval)
         self._scan_lock = asyncio.Lock()
         self._scanning_started = False
@@ -77,8 +72,8 @@ class TemplateEntityCheckerCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             return await self._async_scan()
 
     async def _async_scan(self) -> dict[str, Any]:
-        """Load all selected helpers, parse safely, and aggregate results."""
-        sources, source_errors = load_template_sources(self.hass, self.template_types)
+        """Load all UI-created Template Helpers and aggregate safe static results."""
+        sources, source_errors = load_template_sources(self.hass)
         references: list[tuple[TemplateSource, StaticReference]] = []
         parser_diagnostics: list[dict[str, Any]] = []
         load_errors = [error.as_dict() for error in source_errors]
@@ -157,7 +152,9 @@ class TemplateEntityCheckerCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "parser_diagnostics": parser_diagnostics,
             "load_errors": load_errors,
             "result_signature": current_signature,
-            "template_types": sorted(self.template_types),
+            "template_types_scanned": sorted(
+                {source.template_type for source in sources}
+            ),
         }
 
 

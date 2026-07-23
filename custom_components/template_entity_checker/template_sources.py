@@ -16,7 +16,7 @@ SUPPORTED_ENTRY_VERSIONS = {1: 2, 2: 1}
 
 
 def load_template_sources(
-    hass: HomeAssistant, selected_types: set[str]
+    hass: HomeAssistant,
 ) -> tuple[list[TemplateSource], list[SourceLoadError]]:
     """Read template strings from Template Helper config entry options.
 
@@ -28,7 +28,7 @@ def load_template_sources(
 
     for entry in hass.config_entries.async_entries(TEMPLATE_DOMAIN):
         try:
-            sources.extend(_sources_from_entry(entry, selected_types))
+            sources.extend(_sources_from_entry(entry))
         except (KeyError, TypeError, ValueError) as err:
             errors.append(
                 SourceLoadError(
@@ -40,9 +40,7 @@ def load_template_sources(
     return sources, errors
 
 
-def _sources_from_entry(
-    entry: ConfigEntry, selected_types: set[str]
-) -> list[TemplateSource]:
+def _sources_from_entry(entry: ConfigEntry) -> list[TemplateSource]:
     """Convert one Template Helper entry into independently scannable strings."""
     max_minor_version = SUPPORTED_ENTRY_VERSIONS.get(entry.version)
     if max_minor_version is None or entry.minor_version > max_minor_version:
@@ -58,8 +56,6 @@ def _sources_from_entry(
     template_type = options.get("template_type")
     if not isinstance(template_type, str) or not template_type:
         raise KeyError("Template Helper has no template_type option")
-    if template_type not in selected_types:
-        return []
 
     helper = options.get("name") or entry.title
     if not isinstance(helper, str) or not helper:
