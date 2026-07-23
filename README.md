@@ -6,6 +6,8 @@
 
 Template Entity Checker is a read-only Home Assistant custom integration. It scans templates stored by UI-created Template Helpers and reports static entity references that no longer exist.
 
+**A focused complement, not a replacement:** Template Entity Checker does not replace Spook or Watchman. It focuses on UI-created Template Helpers and surfaces detailed findings directly in Home Assistant through its sensor and persistent notification as soon as a scan finds them—without opening and working through a separate text report.
+
 It never renders or changes templates, never repairs references, never guesses dynamic entity IDs, and never reads or writes `.storage` directly.
 
 ## Version 0.1.0 scope
