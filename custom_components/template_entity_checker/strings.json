@@ -1,0 +1,81 @@
+{
+  "title": "Template Entity Checker",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Template Entity Checker",
+        "description": "Scan UI-created Template Helpers for static references to missing entities.",
+        "data": {
+          "scan_interval": "Scan interval (minutes)",
+          "notifications": "Persistent notifications",
+          "template_types": "Template Helper types",
+          "ignored_entities": "Exact entity IDs to ignore"
+        },
+        "data_description": {
+          "ignored_entities": "One exact entity ID per line. Wildcards are not supported."
+        }
+      }
+    },
+    "error": {
+      "invalid_entity_id": "At least one ignored entity ID is invalid.",
+      "no_template_type_selected": "Select at least one Template Helper type."
+    },
+    "abort": {
+      "single_instance_allowed": "Only one instance is supported."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Template Entity Checker options",
+        "data": {
+          "scan_interval": "Scan interval (minutes)",
+          "notifications": "Persistent notifications",
+          "template_types": "Template Helper types",
+          "ignored_entities": "Exact entity IDs to ignore"
+        },
+        "data_description": {
+          "ignored_entities": "One exact entity ID per line. Wildcards are not supported."
+        }
+      }
+    },
+    "error": {
+      "invalid_entity_id": "At least one ignored entity ID is invalid.",
+      "no_template_type_selected": "Select at least one Template Helper type."
+    }
+  },
+  "selector": {
+    "template_types": {
+      "options": {
+        "alarm_control_panel": "Alarm control panel",
+        "binary_sensor": "Binary sensor",
+        "button": "Button",
+        "cover": "Cover",
+        "device_tracker": "Device tracker",
+        "event": "Event",
+        "fan": "Fan",
+        "image": "Image",
+        "light": "Light",
+        "lock": "Lock",
+        "number": "Number",
+        "select": "Select",
+        "sensor": "Sensor",
+        "switch": "Switch",
+        "update": "Update",
+        "vacuum": "Vacuum",
+        "weather": "Weather"
+      }
+    }
+  },
+  "services": {
+    "scan_now": {
+      "name": "Scan now",
+      "description": "Immediately scan all selected UI-created Template Helpers."
+    }
+  },
+  "exceptions": {
+    "not_loaded": {
+      "message": "Template Entity Checker is not loaded."
+    }
+  }
+}

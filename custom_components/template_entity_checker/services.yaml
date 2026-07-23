@@ -1,0 +1,4 @@
+scan_now:
+  name: Scan now
+  description: Immediately scan all selected UI-created Template Helpers.
+  fields: {}

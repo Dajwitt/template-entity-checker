@@ -1,0 +1,13 @@
+{
+  "domain": "template_entity_checker",
+  "name": "Template Entity Checker",
+  "codeowners": ["@Dajwitt"],
+  "config_flow": true,
+  "dependencies": ["persistent_notification", "template"],
+  "documentation": "https://github.com/Dajwitt/template-entity-checker",
+  "integration_type": "service",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/Dajwitt/template-entity-checker/issues",
+  "single_config_entry": true,
+  "version": "0.1.0"
+}
