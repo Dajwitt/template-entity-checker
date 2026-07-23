@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator, Mapping, Sequence
+from copy import deepcopy
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
@@ -11,6 +12,7 @@ from homeassistant.core import HomeAssistant
 from .models import SourceLoadError, TemplateSource
 
 TEMPLATE_DOMAIN = "template"
+SUPPORTED_ENTRY_VERSIONS = {1: 2, 2: 1}
 
 
 def load_template_sources(
@@ -42,7 +44,14 @@ def _sources_from_entry(
     entry: ConfigEntry, selected_types: set[str]
 ) -> list[TemplateSource]:
     """Convert one Template Helper entry into independently scannable strings."""
-    options = entry.options
+    max_minor_version = SUPPORTED_ENTRY_VERSIONS.get(entry.version)
+    if max_minor_version is None or entry.minor_version > max_minor_version:
+        raise ValueError(
+            "Unsupported Template Helper config entry schema "
+            f"{entry.version}.{entry.minor_version}"
+        )
+
+    options = deepcopy(dict(entry.options))
     if not isinstance(options, Mapping):
         raise TypeError("Template Helper options are not a mapping")
 
