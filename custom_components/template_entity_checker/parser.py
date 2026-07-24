@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import re
+from collections import defaultdict, deque
+from collections.abc import Iterable
 
 from jinja2 import Environment, TemplateSyntaxError, nodes
 
@@ -24,6 +26,8 @@ _JINJA_ENVIRONMENT = Environment(
 
 # token_type, token_value, normalized source offset, Jinja region number
 _LocatedToken = tuple[str, str, int, int]
+_CallPermissions = dict[tuple[str, int], deque[bool]]
+_DottedPermissions = dict[int, deque[bool]]
 
 
 def parse_template(
@@ -49,13 +53,16 @@ def parse_template(
             )
         ]
 
-    bound_names = _bound_names(parsed_template)
-    allowed_functions = _SUPPORTED_FUNCTIONS - bound_names
+    call_permissions, dotted_permissions = _reference_permissions(parsed_template)
     tokens = _syntax_tokens(normalized)
 
     references: list[StaticReference] = []
     diagnostics: list[ParserDiagnostic] = []
-    for function, start in _global_function_calls(tokens, allowed_functions):
+    for function, start in _global_function_calls(
+        normalized,
+        tokens,
+        call_permissions,
+    ):
         if function == "expand":
             parsed, call_diagnostics = _parse_expand_call(
                 normalized,
@@ -74,15 +81,15 @@ def parse_template(
         references.extend(parsed)
         diagnostics.extend(call_diagnostics)
 
-    if "states" not in bound_names:
-        references.extend(
-            _dotted_state_references(
-                normalized,
-                template,
-                original_offsets,
-                tokens,
-            )
+    references.extend(
+        _dotted_state_references(
+            normalized,
+            template,
+            original_offsets,
+            tokens,
+            dotted_permissions,
         )
+    )
 
     references.sort(key=lambda item: (item.line, item.column))
     diagnostics.sort(key=lambda item: (item.line, item.column, item.code))
@@ -112,20 +119,359 @@ def _normalize_template(template: str) -> tuple[str, list[int]]:
     return "".join(characters), original_offsets
 
 
-def _bound_names(template: nodes.Template) -> set[str]:
-    """Return names locally defined anywhere in the Jinja template."""
-    result = {
-        node.name
-        for node in template.find_all(nodes.Name)
-        if node.ctx in {"store", "param"}
-    }
-    result.update(node.name for node in template.find_all(nodes.Macro))
-    result.update(node.target for node in template.find_all(nodes.Import))
-    for node in template.find_all(nodes.FromImport):
-        result.update(
-            name[1] if isinstance(name, tuple) else name for name in node.names
+def _reference_permissions(
+    template: nodes.Template,
+) -> tuple[_CallPermissions, _DottedPermissions]:
+    """Map source-ordered expressions to decisions from their lexical scope."""
+    call_permissions: defaultdict[tuple[str, int], deque[bool]] = defaultdict(deque)
+    dotted_permissions: defaultdict[int, deque[bool]] = defaultdict(deque)
+    seen_dotted_bases: set[int] = set()
+    _walk_reference_nodes(
+        template,
+        frozenset(),
+        call_permissions,
+        dotted_permissions,
+        seen_dotted_bases,
+    )
+    return dict(call_permissions), dict(dotted_permissions)
+
+
+def _walk_reference_nodes(
+    node: nodes.Node,
+    bound_names: frozenset[str],
+    call_permissions: defaultdict[tuple[str, int], deque[bool]],
+    dotted_permissions: defaultdict[int, deque[bool]],
+    seen_dotted_bases: set[int],
+) -> None:
+    """Walk the Jinja AST while respecting lexical binding scopes."""
+    if isinstance(node, nodes.Template):
+        _walk_body(
+            node.body,
+            bound_names,
+            call_permissions,
+            dotted_permissions,
+            seen_dotted_bases,
         )
-    return result
+        return
+
+    if isinstance(node, nodes.For):
+        _walk_reference_nodes(
+            node.iter,
+            bound_names,
+            call_permissions,
+            dotted_permissions,
+            seen_dotted_bases,
+        )
+        loop_names = bound_names | _target_names(node.target)
+        if node.test is not None:
+            _walk_reference_nodes(
+                node.test,
+                loop_names,
+                call_permissions,
+                dotted_permissions,
+                seen_dotted_bases,
+            )
+        _walk_body(
+            node.body,
+            loop_names,
+            call_permissions,
+            dotted_permissions,
+            seen_dotted_bases,
+        )
+        _walk_body(
+            node.else_,
+            bound_names,
+            call_permissions,
+            dotted_permissions,
+            seen_dotted_bases,
+        )
+        return
+
+    if isinstance(node, nodes.Macro):
+        _walk_children(
+            node.defaults,
+            bound_names,
+            call_permissions,
+            dotted_permissions,
+            seen_dotted_bases,
+        )
+        macro_names = (
+            bound_names | {node.name} | {argument.name for argument in node.args}
+        )
+        _walk_body(
+            node.body,
+            macro_names,
+            call_permissions,
+            dotted_permissions,
+            seen_dotted_bases,
+        )
+        return
+
+    if isinstance(node, nodes.With):
+        _walk_children(
+            node.values,
+            bound_names,
+            call_permissions,
+            dotted_permissions,
+            seen_dotted_bases,
+        )
+        target_names = frozenset().union(
+            *(_target_names(target) for target in node.targets)
+        )
+        with_names = bound_names | target_names
+        _walk_body(
+            node.body,
+            with_names,
+            call_permissions,
+            dotted_permissions,
+            seen_dotted_bases,
+        )
+        return
+
+    if isinstance(node, nodes.CallBlock):
+        _walk_children(
+            node.defaults,
+            bound_names,
+            call_permissions,
+            dotted_permissions,
+            seen_dotted_bases,
+        )
+        _walk_reference_nodes(
+            node.call,
+            bound_names,
+            call_permissions,
+            dotted_permissions,
+            seen_dotted_bases,
+        )
+        call_names = bound_names | {argument.name for argument in node.args}
+        _walk_body(
+            node.body,
+            call_names,
+            call_permissions,
+            dotted_permissions,
+            seen_dotted_bases,
+        )
+        return
+
+    if isinstance(node, nodes.AssignBlock):
+        if node.filter is not None:
+            filter_names = bound_names | _scope_bindings(node.body)
+            _walk_reference_nodes(
+                node.filter,
+                filter_names,
+                call_permissions,
+                dotted_permissions,
+                seen_dotted_bases,
+            )
+        _walk_body(
+            node.body,
+            bound_names,
+            call_permissions,
+            dotted_permissions,
+            seen_dotted_bases,
+        )
+        return
+
+    if isinstance(node, nodes.FilterBlock):
+        filter_names = bound_names | _scope_bindings(node.body)
+        _walk_reference_nodes(
+            node.filter,
+            filter_names,
+            call_permissions,
+            dotted_permissions,
+            seen_dotted_bases,
+        )
+        _walk_body(
+            node.body,
+            bound_names,
+            call_permissions,
+            dotted_permissions,
+            seen_dotted_bases,
+        )
+        return
+
+    if isinstance(node, nodes.OverlayScope):
+        _walk_reference_nodes(
+            node.context,
+            bound_names,
+            call_permissions,
+            dotted_permissions,
+            seen_dotted_bases,
+        )
+        _walk_body(
+            node.body,
+            bound_names,
+            call_permissions,
+            dotted_permissions,
+            seen_dotted_bases,
+        )
+        return
+
+    if isinstance(node, (nodes.Block, nodes.Scope)):
+        _walk_body(
+            node.body,
+            bound_names,
+            call_permissions,
+            dotted_permissions,
+            seen_dotted_bases,
+        )
+        return
+
+    if isinstance(node, nodes.If):
+        _walk_reference_nodes(
+            node.test,
+            bound_names,
+            call_permissions,
+            dotted_permissions,
+            seen_dotted_bases,
+        )
+        _walk_body(
+            node.body,
+            bound_names,
+            call_permissions,
+            dotted_permissions,
+            seen_dotted_bases,
+        )
+        _walk_children(
+            node.elif_,
+            bound_names,
+            call_permissions,
+            dotted_permissions,
+            seen_dotted_bases,
+        )
+        _walk_body(
+            node.else_,
+            bound_names,
+            call_permissions,
+            dotted_permissions,
+            seen_dotted_bases,
+        )
+        return
+
+    if (
+        isinstance(node, nodes.Call)
+        and isinstance(node.node, nodes.Name)
+        and node.node.name in _SUPPORTED_FUNCTIONS
+    ):
+        call_permissions[(node.node.name, node.lineno)].append(
+            node.node.name not in bound_names
+        )
+
+    if isinstance(node, nodes.Getattr):
+        base = _dotted_states_base(node)
+        if base is not None and id(base) not in seen_dotted_bases:
+            seen_dotted_bases.add(id(base))
+            dotted_permissions[base.lineno].append("states" not in bound_names)
+
+    _walk_children(
+        node.iter_child_nodes(),
+        bound_names,
+        call_permissions,
+        dotted_permissions,
+        seen_dotted_bases,
+    )
+
+
+def _walk_children(
+    children: Iterable[nodes.Node],
+    bound_names: frozenset[str],
+    call_permissions: defaultdict[tuple[str, int], deque[bool]],
+    dotted_permissions: defaultdict[int, deque[bool]],
+    seen_dotted_bases: set[int],
+) -> None:
+    """Walk child nodes with one shared lexical scope."""
+    for child in children:
+        _walk_reference_nodes(
+            child,
+            bound_names,
+            call_permissions,
+            dotted_permissions,
+            seen_dotted_bases,
+        )
+
+
+def _walk_body(
+    body: Iterable[nodes.Node],
+    bound_names: frozenset[str],
+    call_permissions: defaultdict[tuple[str, int], deque[bool]],
+    dotted_permissions: defaultdict[int, deque[bool]],
+    seen_dotted_bases: set[int],
+) -> None:
+    """Walk statements in execution order and activate same-scope bindings."""
+    active_names = bound_names
+    for child in body:
+        _walk_reference_nodes(
+            child,
+            active_names,
+            call_permissions,
+            dotted_permissions,
+            seen_dotted_bases,
+        )
+        active_names |= _scope_bindings((child,))
+
+
+def _scope_bindings(body: Iterable[nodes.Node]) -> frozenset[str]:
+    """Collect bindings in one lexical scope, excluding nested child scopes."""
+    result: set[str] = set()
+
+    def collect(node: nodes.Node) -> None:
+        if isinstance(node, (nodes.Assign, nodes.AssignBlock)):
+            result.update(_target_names(node.target))
+            return
+        if isinstance(node, nodes.Macro):
+            result.add(node.name)
+            return
+        if isinstance(node, nodes.Import):
+            result.add(node.target)
+            return
+        if isinstance(node, nodes.FromImport):
+            result.update(
+                name[1] if isinstance(name, tuple) else name for name in node.names
+            )
+            return
+        if isinstance(
+            node,
+            (
+                nodes.For,
+                nodes.With,
+                nodes.CallBlock,
+                nodes.FilterBlock,
+                nodes.OverlayScope,
+                nodes.Block,
+                nodes.Scope,
+            ),
+        ):
+            return
+        for child in node.iter_child_nodes():
+            collect(child)
+
+    for item in body:
+        collect(item)
+    return frozenset(result)
+
+
+def _target_names(target: nodes.Node) -> frozenset[str]:
+    """Return names introduced by one assignment-style target."""
+    if isinstance(target, nodes.Name):
+        return frozenset({target.name})
+    if isinstance(target, (nodes.Tuple, nodes.List)):
+        return frozenset().union(*(_target_names(item) for item in target.items))
+    return frozenset()
+
+
+def _dotted_states_base(node: nodes.Getattr) -> nodes.Name | None:
+    """Return the states base for a valid dotted entity expression."""
+    attributes: list[str] = []
+    current: nodes.Node = node
+    while isinstance(current, nodes.Getattr):
+        attributes.append(current.attr)
+        current = current.node
+    attributes.reverse()
+    if not isinstance(current, nodes.Name) or current.name != "states":
+        return None
+    if len(attributes) == 2 or (len(attributes) == 3 and attributes[-1] == "state"):
+        return current
+    return None
 
 
 def _syntax_tokens(template: str) -> list[_LocatedToken]:
@@ -150,12 +496,14 @@ def _syntax_tokens(template: str) -> list[_LocatedToken]:
 
 
 def _global_function_calls(
-    tokens: list[_LocatedToken], allowed_functions: set[str]
+    template: str,
+    tokens: list[_LocatedToken],
+    permissions: _CallPermissions,
 ) -> list[tuple[str, int]]:
     """Locate genuine global calls, excluding methods, filters, and tests."""
     calls: list[tuple[str, int]] = []
     for index, (token_type, value, start, region) in enumerate(tokens):
-        if token_type != "name" or value not in allowed_functions:
+        if token_type != "name" or value not in _SUPPORTED_FUNCTIONS:
             continue
         if (
             index + 1 >= len(tokens)
@@ -167,10 +515,40 @@ def _global_function_calls(
             previous_type, previous_value = tokens[index - 1][:2]
             if previous_type == "operator" and previous_value in {".", "|"}:
                 continue
-            if previous_type == "name" and previous_value == "is":
-                continue
+        if _is_test_name(tokens, index, region):
+            continue
+        if _is_syntax_name(tokens, index, region):
+            continue
+        line = _position(template, start)["line"]
+        decisions = permissions.get((value, line))
+        if decisions is None or not decisions or not decisions.popleft():
+            continue
         calls.append((value, start))
     return calls
+
+
+def _is_test_name(tokens: list[_LocatedToken], index: int, region: int) -> bool:
+    """Return whether a name identifies a Jinja `is [not]` test."""
+    if index > 0 and tokens[index - 1][3] == region:
+        if tokens[index - 1][:2] == ("name", "is"):
+            return True
+        if (
+            tokens[index - 1][:2] == ("name", "not")
+            and index > 1
+            and tokens[index - 2][3] == region
+            and tokens[index - 2][:2] == ("name", "is")
+        ):
+            return True
+    return False
+
+
+def _is_syntax_name(tokens: list[_LocatedToken], index: int, region: int) -> bool:
+    """Return whether a name declares a macro or identifies a filter block."""
+    return (
+        index > 0
+        and tokens[index - 1][3] == region
+        and tokens[index - 1][:2] in {("name", "macro"), ("name", "filter")}
+    )
 
 
 def _parse_direct_call(
@@ -329,17 +707,20 @@ def _dotted_state_references(
     original: str,
     original_offsets: list[int],
     tokens: list[_LocatedToken],
+    permissions: _DottedPermissions,
 ) -> list[StaticReference]:
     """Extract global states.domain.object and optional .state expressions."""
     references: list[StaticReference] = []
     for index, (token_type, value, start, region) in enumerate(tokens):
         if token_type != "name" or value != "states":
             continue
-        if (
-            index > 0
-            and tokens[index - 1][3] == region
-            and tokens[index - 1][:2] == ("operator", ".")
-        ):
+        if index > 0 and tokens[index - 1][3] == region:
+            previous_type, previous_value = tokens[index - 1][:2]
+            if previous_type == "operator" and previous_value in {".", "|"}:
+                continue
+        if _is_test_name(tokens, index, region):
+            continue
+        if _is_syntax_name(tokens, index, region):
             continue
         if index + 4 >= len(tokens):
             continue
@@ -356,6 +737,10 @@ def _dotted_state_references(
 
         entity_id = f"{sequence[1][1]}.{sequence[3][1]}"
         if not re.fullmatch(_ENTITY, entity_id):
+            continue
+        line = _position(normalized, start)["line"]
+        decisions = permissions.get(line)
+        if decisions is None or not decisions or not decisions.popleft():
             continue
         end = sequence[3][2] + len(sequence[3][1])
         if (

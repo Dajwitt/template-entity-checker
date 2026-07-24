@@ -16,8 +16,8 @@ class FakeEntry:
         entry_id="entry-1",
         title="Humidity",
         options=None,
-        version=2,
-        minor_version=1,
+        version=1,
+        minor_version=2,
     ):
         self.entry_id = entry_id
         self.title = title
@@ -30,7 +30,7 @@ class FakeEntry:
                 "name": "Average humidity",
                 "template_type": "sensor",
                 "state": "{{ states('sensor.humidity') }}",
-                "additional_options": {
+                "advanced_options": {
                     "availability": "{{ is_state('binary_sensor.ready', 'on') }}"
                 },
                 "unit_of_measurement": "%",
@@ -42,7 +42,7 @@ def test_sources_include_metadata_and_nested_field_path():
     sources = _sources_from_entry(FakeEntry())
     assert [(item.template_field, item.source_id) for item in sources] == [
         ("state", "entry-1"),
-        ("additional_options.availability", "entry-1"),
+        ("advanced_options.availability", "entry-1"),
     ]
     assert all(item.helper == "Average humidity" for item in sources)
     assert all(item.source_type == "template_helper" for item in sources)
@@ -99,7 +99,7 @@ def test_stable_2026_7_advanced_options_schema_is_supported():
     ]
 
 
-@pytest.mark.parametrize("version, minor_version", [(1, 3), (2, 2), (3, 0)])
+@pytest.mark.parametrize("version, minor_version", [(1, 3), (2, 1), (3, 0)])
 def test_unknown_future_entry_schema_becomes_load_error(version, minor_version):
     entry = FakeEntry(version=version, minor_version=minor_version)
     hass = SimpleNamespace(
@@ -182,10 +182,10 @@ def test_device_tracker_has_value_templates_are_loaded_from_confirmed_fields():
         ),
     ],
 )
-@pytest.mark.parametrize("section_name", ["advanced_options", "additional_options"])
 def test_confirmed_template_fields_are_scanned_for_every_helper_type(
-    template_type, root_fields, section_name
+    template_type, root_fields
 ):
+    section_name = "advanced_options"
     options = {
         "name": f"{template_type} helper",
         "template_type": template_type,
@@ -198,11 +198,10 @@ def test_confirmed_template_fields_are_scanned_for_every_helper_type(
             "{{ states('sensor.location_accuracy') }}"
         )
 
-    entry_version = (1, 2) if section_name == "advanced_options" else (2, 1)
     sources = _sources_from_entry(
         FakeEntry(
-            version=entry_version[0],
-            minor_version=entry_version[1],
+            version=1,
+            minor_version=2,
             options=options,
         )
     )
@@ -213,19 +212,12 @@ def test_confirmed_template_fields_are_scanned_for_every_helper_type(
     assert [item.template_field for item in sources] == expected_paths
 
 
-@pytest.mark.parametrize(
-    ("version", "minor_version", "expected_section", "foreign_section"),
-    [
-        (1, 2, "advanced_options", "additional_options"),
-        (2, 1, "additional_options", "advanced_options"),
-    ],
-)
-def test_nested_template_section_is_selected_by_schema_version(
-    version, minor_version, expected_section, foreign_section
-):
+def test_only_confirmed_nested_template_section_is_scanned():
+    expected_section = "advanced_options"
+    foreign_section = "additional_options"
     entry = FakeEntry(
-        version=version,
-        minor_version=minor_version,
+        version=1,
+        minor_version=2,
         options={
             "name": "Location helper",
             "template_type": "device_tracker",

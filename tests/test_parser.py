@@ -144,6 +144,296 @@ def test_locally_bound_home_assistant_names_are_not_treated_as_globals(template)
     assert parse_template(template) == ([], [])
 
 
+@pytest.mark.parametrize(
+    ("template", "expected_entity"),
+    [
+        (
+            "{{ states('sensor.before_set') }}{% set states = helper %}",
+            "sensor.before_set",
+        ),
+        (
+            "{{ states.sensor.before_set }}{% set states = helper %}",
+            "sensor.before_set",
+        ),
+        (
+            "{{ expand(['sensor.before_macro']) }}"
+            "{% macro expand(value) %}{{ expand(value) }}{% endmacro %}",
+            "sensor.before_macro",
+        ),
+    ],
+)
+def test_global_calls_before_same_scope_bindings_are_preserved(
+    template, expected_entity
+):
+    references, diagnostics = parse_template(template)
+
+    assert [item.entity_id for item in references] == [expected_entity]
+    assert diagnostics == []
+
+
+def test_assignment_value_is_evaluated_before_its_target_is_bound():
+    references, diagnostics = parse_template(
+        "{% set states = states('sensor.assignment_value') %}"
+    )
+
+    assert [item.entity_id for item in references] == ["sensor.assignment_value"]
+    assert diagnostics == []
+
+
+def test_bindings_apply_in_source_order_inside_if_branches():
+    template = (
+        "{% if true %}"
+        "{{ states('sensor.before_branch_set') }}"
+        "{% set states = helper %}"
+        "{{ states('sensor.after_branch_set') }}"
+        "{% endif %}"
+    )
+
+    references, diagnostics = parse_template(template)
+
+    assert [item.entity_id for item in references] == ["sensor.before_branch_set"]
+    assert diagnostics == []
+
+
+def test_for_target_is_not_bound_in_else_branch():
+    template = (
+        "{% for states in [] %}"
+        "{{ states('sensor.inside_loop') }}"
+        "{% else %}"
+        "{{ states('sensor.loop_else') }}"
+        "{% endfor %}"
+    )
+
+    references, diagnostics = parse_template(template)
+
+    assert [item.entity_id for item in references] == ["sensor.loop_else"]
+    assert diagnostics == []
+
+
+@pytest.mark.parametrize(
+    ("template", "expected_entity"),
+    [
+        (
+            "{% for states in values %}"
+            "{{ states('sensor.inside_loop') }}"
+            "{% endfor %}"
+            "{{ states('sensor.after_loop') }}",
+            "sensor.after_loop",
+        ),
+        (
+            "{% macro check(expand) %}"
+            "{{ expand(['sensor.inside_macro']) }}"
+            "{% endmacro %}"
+            "{{ expand(['sensor.after_macro']) }}",
+            "sensor.after_macro",
+        ),
+        (
+            "{% with has_value = helper %}"
+            "{{ has_value('sensor.inside_with') }}"
+            "{% endwith %}"
+            "{{ has_value('sensor.after_with') }}",
+            "sensor.after_with",
+        ),
+    ],
+)
+def test_scoped_bindings_do_not_hide_later_global_calls(template, expected_entity):
+    references, diagnostics = parse_template(template)
+
+    assert [item.entity_id for item in references] == [expected_entity]
+    assert diagnostics == []
+
+
+def test_scoped_states_binding_does_not_hide_later_dotted_reference():
+    template = (
+        "{% for states in values %}"
+        "{{ states.sensor.inside_loop }}"
+        "{% endfor %}"
+        "{{ states.sensor.after_loop }}"
+    )
+
+    references, diagnostics = parse_template(template)
+
+    assert [item.entity_id for item in references] == ["sensor.after_loop"]
+    assert diagnostics == []
+
+
+def test_filter_block_binding_does_not_hide_later_global_call():
+    template = (
+        "{% filter upper %}"
+        "{% set states = helper %}"
+        "{{ states('sensor.inside_filter') }}"
+        "{% endfilter %}"
+        "{{ states('sensor.after_filter') }}"
+    )
+
+    references, diagnostics = parse_template(template)
+
+    assert [item.entity_id for item in references] == ["sensor.after_filter"]
+    assert diagnostics == []
+
+
+def test_filter_block_body_bindings_follow_execution_order():
+    template = (
+        "{% filter replace(states('sensor.filter_argument'), 'x') %}"
+        "{{ states('sensor.before_filter_set') }}"
+        "{% set states = helper %}"
+        "{% endfilter %}"
+    )
+
+    references, diagnostics = parse_template(template)
+
+    assert [item.entity_id for item in references] == ["sensor.before_filter_set"]
+    assert diagnostics == []
+
+
+def test_filter_block_name_does_not_consume_later_call_permission():
+    template = (
+        "{% filter states('sensor.filter_arg') %}x{% endfilter %}"
+        "{{ states('sensor.real') }}"
+    )
+
+    references, diagnostics = parse_template(template)
+
+    assert [item.entity_id for item in references] == ["sensor.real"]
+    assert diagnostics == []
+
+
+def test_dotted_filter_block_name_does_not_consume_later_permission():
+    template = (
+        "{% filter states.sensor.filter_arg %}x{% endfilter %}{{ states.sensor.real }}"
+    )
+
+    references, diagnostics = parse_template(template)
+
+    assert [item.entity_id for item in references] == ["sensor.real"]
+    assert diagnostics == []
+
+
+@pytest.mark.parametrize(
+    "template",
+    [
+        "{{ 'x' | states.sensor.fake }}{{ states.sensor.real }}",
+        "{% set captured | states.sensor.fake %}x{% endset %}{{ states.sensor.real }}",
+    ],
+)
+def test_dotted_filter_name_does_not_consume_later_permission(template):
+    references, diagnostics = parse_template(template)
+
+    assert [item.entity_id for item in references] == ["sensor.real"]
+    assert diagnostics == []
+
+
+def test_macro_name_does_not_consume_default_call_permission():
+    template = (
+        "{% macro states(x=states('sensor.default')) %}"
+        "{{ states('sensor.self') }}"
+        "{% endmacro %}"
+    )
+
+    references, diagnostics = parse_template(template)
+
+    assert [item.entity_id for item in references] == ["sensor.default"]
+    assert diagnostics == []
+
+
+def test_assign_block_body_bindings_follow_source_order():
+    template = (
+        "{% set captured %}"
+        "{% set states = helper %}"
+        "{{ states('sensor.local') }}"
+        "{% endset %}"
+        "{{ states('sensor.real') }}"
+    )
+
+    references, diagnostics = parse_template(template)
+
+    assert [item.entity_id for item in references] == ["sensor.real"]
+    assert diagnostics == []
+
+
+def test_filtered_assign_block_uses_final_body_scope_for_filter():
+    template = (
+        "{% set captured | replace(states('sensor.filter_arg'), 'x') %}"
+        "{% set states = helper %}"
+        "{{ states('sensor.local') }}"
+        "{% endset %}"
+        "{{ states('sensor.real') }}"
+    )
+
+    references, diagnostics = parse_template(template)
+
+    assert [item.entity_id for item in references] == ["sensor.real"]
+    assert diagnostics == []
+
+
+def test_conditional_binding_conservatively_hides_later_same_scope_call():
+    template = (
+        "{% if condition %}{% set states = helper %}{% endif %}"
+        "{{ states('sensor.after_conditional_set') }}"
+    )
+
+    assert parse_template(template) == ([], [])
+
+
+def test_call_block_parameters_stay_scoped_to_the_caller_body():
+    template = (
+        "{% macro wrapper() %}{{ caller() }}{% endmacro %}"
+        "{% call(states=states('sensor.call_default')) wrapper() %}"
+        "{{ states('sensor.inside_call') }}"
+        "{% endcall %}"
+        "{{ states('sensor.after_call') }}"
+    )
+
+    references, diagnostics = parse_template(template)
+
+    assert [item.entity_id for item in references] == [
+        "sensor.call_default",
+        "sensor.after_call",
+    ]
+    assert diagnostics == []
+
+
+def test_block_binding_does_not_hide_later_global_call():
+    template = (
+        "{% block content %}"
+        "{% set states = helper %}"
+        "{{ states('sensor.inside_block') }}"
+        "{% endblock %}"
+        "{{ states('sensor.after_block') }}"
+    )
+
+    references, diagnostics = parse_template(template)
+
+    assert [item.entity_id for item in references] == ["sensor.after_block"]
+    assert diagnostics == []
+
+
+@pytest.mark.parametrize(
+    "template",
+    [
+        "{{ value is states('sensor.test_call') }}",
+        "{{ value is not states('sensor.negated_test_call') }}",
+        "{{ value is expand(['sensor.test_expand']) }}",
+        "{{ value is not expand(['sensor.negated_test_expand']) }}",
+        "{{ value is states.sensor.test_dotted }}",
+        "{{ value is not states.sensor.negated_test_dotted }}",
+    ],
+)
+def test_jinja_tests_are_not_treated_as_home_assistant_globals(template):
+    assert parse_template(template) == ([], [])
+
+
+def test_jinja_test_does_not_hide_later_global_call_on_same_line():
+    template = (
+        "{{ value is not states('sensor.test_call') }}{{ states('sensor.real_call') }}"
+    )
+
+    references, diagnostics = parse_template(template)
+
+    assert [item.entity_id for item in references] == ["sensor.real_call"]
+    assert diagnostics == []
+
+
 def test_tokens_never_form_calls_across_jinja_block_boundaries():
     assert parse_template("{{ states }} {{ ('sensor.fake') }}") == ([], [])
     assert parse_template("{{ expand }} {{ (['sensor.fake']) }}") == ([], [])

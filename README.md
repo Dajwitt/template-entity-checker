@@ -45,7 +45,7 @@ It never renders or changes templates, never repairs references, never guesses d
 
 Literal entity IDs inside `expand()` lists, tuples, and multiple arguments are checked individually. If an `expand()` collection mixes literal and dynamic values, the literal IDs are still checked while the dynamic part is reported separately and never guessed.
 
-Repeated occurrences are grouped without losing their count or line/column locations. Function-like text inside normal text, Jinja comments, quoted strings, or calls on other objects is not treated as a Home Assistant entity reference.
+Repeated occurrences are grouped without losing their count or line/column locations. Function-like text inside normal text, Jinja comments, quoted strings, Jinja `is` / `is not` tests, macro and filter-block names, or calls on other objects is not treated as a Home Assistant entity reference. Local names follow Jinja scope and execution order: clear global calls before a same-scope binding remain detectable, locally resolved calls are ignored, and a child scope does not hide a later global call.
 
 ## Dynamic references
 
@@ -154,7 +154,7 @@ Download diagnostics from **Settings → Devices & services → Template Entity 
 
 ## Known limits
 
-- The public Config Entry API is used read-only, but the `template` integration's option field structure is an internal schema and can change with Home Assistant releases. Access is isolated in `template_sources.py` and tested.
+- The public Config Entry API is used read-only, but the `template` integration's option field structure is an internal schema and can change with Home Assistant releases. Access is isolated in `template_sources.py` and tested. Unconfirmed newer schema versions are reported as source-load errors instead of being guessed.
 - YAML-based Template entities are not supported because Home Assistant provides no stable public API for another integration to enumerate all original YAML template sources.
 - Templates in automations, scripts, scenes, dashboards, blueprints, and other integrations are not scanned.
 - Jinja is not rendered or semantically executed. Conservative static extraction intentionally misses indirect references.
