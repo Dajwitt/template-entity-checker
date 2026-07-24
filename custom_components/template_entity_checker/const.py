@@ -4,7 +4,7 @@ from homeassistant.const import Platform
 
 DOMAIN = "template_entity_checker"
 NAME = "Template Entity Checker"
-VERSION = "0.1.0"
+VERSION = "0.1.1"
 
 PLATFORMS = [Platform.SENSOR]
 
