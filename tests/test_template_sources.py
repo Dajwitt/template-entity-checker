@@ -2,6 +2,8 @@
 
 from types import SimpleNamespace
 
+import pytest
+
 from custom_components.template_entity_checker.template_sources import (
     _sources_from_entry,
     load_template_sources,
@@ -69,7 +71,7 @@ def test_missing_template_type_becomes_load_error():
     assert "template_type" in errors[0].error
 
 
-def test_list_fields_have_stable_paths():
+def test_unknown_list_fields_are_not_scanned_as_templates():
     entry = FakeEntry(
         options={
             "name": "List helper",
@@ -78,7 +80,7 @@ def test_list_fields_have_stable_paths():
         }
     )
     sources = _sources_from_entry(entry)
-    assert [item.template_field for item in sources] == ["attributes[0]"]
+    assert sources == []
 
 
 def test_stable_2026_7_advanced_options_schema_is_supported():
@@ -97,11 +99,191 @@ def test_stable_2026_7_advanced_options_schema_is_supported():
     ]
 
 
-def test_unknown_future_entry_schema_becomes_load_error():
-    entry = FakeEntry(version=3, minor_version=0)
+@pytest.mark.parametrize("version, minor_version", [(1, 3), (2, 2), (3, 0)])
+def test_unknown_future_entry_schema_becomes_load_error(version, minor_version):
+    entry = FakeEntry(version=version, minor_version=minor_version)
     hass = SimpleNamespace(
         config_entries=SimpleNamespace(async_entries=lambda domain: [entry])
     )
     sources, errors = load_template_sources(hass)
     assert sources == []
-    assert errors[0].error == "Unsupported Template Helper config entry schema 3.0"
+    assert errors[0].error == (
+        f"Unsupported Template Helper config entry schema {version}.{minor_version}"
+    )
+
+
+def test_device_tracker_has_value_templates_are_loaded_from_confirmed_fields():
+    entry = FakeEntry(
+        version=1,
+        minor_version=2,
+        options={
+            "name": "Location helper",
+            "template_type": "device_tracker",
+            "in_zones": "{{ has_value('binary_sensor.location_source') }}",
+            "advanced_options": {
+                "availability": (
+                    "{{ has_value('binary_sensor.availability_missing') }}"
+                ),
+                "location_accuracy": (
+                    "{{ has_value('sensor.location_accuracy_source') }}"
+                ),
+            },
+        },
+    )
+
+    sources = _sources_from_entry(entry)
+
+    assert [item.template_field for item in sources] == [
+        "in_zones",
+        "advanced_options.availability",
+        "advanced_options.location_accuracy",
+    ]
+
+
+@pytest.mark.parametrize(
+    ("template_type", "root_fields"),
+    [
+        ("alarm_control_panel", ("value_template",)),
+        ("binary_sensor", ("state",)),
+        ("button", ()),
+        ("cover", ("state", "position")),
+        ("device_tracker", ("in_zones", "latitude", "longitude")),
+        ("event", ("event_type", "event_types")),
+        ("fan", ("state", "percentage")),
+        ("image", ("url",)),
+        ("light", ("state", "level", "hs", "temperature")),
+        ("lock", ("state", "code_format")),
+        ("number", ("state",)),
+        ("select", ("state", "options")),
+        ("sensor", ("state",)),
+        ("switch", ("value_template",)),
+        (
+            "update",
+            (
+                "installed_version",
+                "latest_version",
+                "in_progress",
+                "release_summary",
+                "release_url",
+                "title",
+                "update_percentage",
+            ),
+        ),
+        ("vacuum", ("state", "fan_speed")),
+        (
+            "weather",
+            (
+                "condition",
+                "humidity",
+                "temperature",
+                "forecast_daily",
+                "forecast_hourly",
+            ),
+        ),
+    ],
+)
+@pytest.mark.parametrize("section_name", ["advanced_options", "additional_options"])
+def test_confirmed_template_fields_are_scanned_for_every_helper_type(
+    template_type, root_fields, section_name
+):
+    options = {
+        "name": f"{template_type} helper",
+        "template_type": template_type,
+        section_name: {"availability": "{{ has_value('binary_sensor.available') }}"},
+    }
+    for index, field in enumerate(root_fields):
+        options[field] = f"{{{{ states('sensor.source_{index}') }}}}"
+    if template_type == "device_tracker":
+        options[section_name]["location_accuracy"] = (
+            "{{ states('sensor.location_accuracy') }}"
+        )
+
+    entry_version = (1, 2) if section_name == "advanced_options" else (2, 1)
+    sources = _sources_from_entry(
+        FakeEntry(
+            version=entry_version[0],
+            minor_version=entry_version[1],
+            options=options,
+        )
+    )
+
+    expected_paths = [*root_fields, f"{section_name}.availability"]
+    if template_type == "device_tracker":
+        expected_paths.append(f"{section_name}.location_accuracy")
+    assert [item.template_field for item in sources] == expected_paths
+
+
+@pytest.mark.parametrize(
+    ("version", "minor_version", "expected_section", "foreign_section"),
+    [
+        (1, 2, "advanced_options", "additional_options"),
+        (2, 1, "additional_options", "advanced_options"),
+    ],
+)
+def test_nested_template_section_is_selected_by_schema_version(
+    version, minor_version, expected_section, foreign_section
+):
+    entry = FakeEntry(
+        version=version,
+        minor_version=minor_version,
+        options={
+            "name": "Location helper",
+            "template_type": "device_tracker",
+            expected_section: {
+                "availability": "{{ states('sensor.correct_availability') }}",
+                "location_accuracy": "{{ states('sensor.correct_accuracy') }}",
+            },
+            foreign_section: {
+                "availability": "{{ states('sensor.wrong_availability') }}",
+                "location_accuracy": "{{ states('sensor.wrong_accuracy') }}",
+            },
+        },
+    )
+
+    sources = _sources_from_entry(entry)
+
+    assert [item.template_field for item in sources] == [
+        f"{expected_section}.availability",
+        f"{expected_section}.location_accuracy",
+    ]
+    assert all("sensor.wrong" not in item.template for item in sources)
+
+
+def test_action_and_metadata_strings_are_not_scanned_as_template_fields():
+    entry = FakeEntry(
+        options={
+            "name": "Light helper",
+            "template_type": "light",
+            "state": "{{ states('light.source') }}",
+            "turn_on": [
+                {
+                    "action": "light.turn_on",
+                    "target": {"entity_id": "light.target"},
+                    "data": {"message": "{{ states('sensor.action_value') }}"},
+                }
+            ],
+            "unit_of_measurement": "{{ states('sensor.metadata') }}",
+        }
+    )
+
+    sources = _sources_from_entry(entry)
+
+    assert [item.template_field for item in sources] == ["state"]
+
+
+def test_unknown_template_helper_type_becomes_load_error():
+    entry = FakeEntry(
+        options={
+            "name": "Future helper",
+            "template_type": "future_platform",
+            "state": "{{ states('sensor.source') }}",
+        }
+    )
+    hass = SimpleNamespace(
+        config_entries=SimpleNamespace(async_entries=lambda domain: [entry])
+    )
+
+    sources, errors = load_template_sources(hass)
+
+    assert sources == []
+    assert errors[0].error == "Unsupported Template Helper type future_platform"

@@ -218,6 +218,71 @@ async def test_partial_source_failure_preserves_notification(hass, monkeypatch):
     notification.assert_not_called()
 
 
+async def test_scan_combines_has_value_and_expand_results(hass, monkeypatch):
+    entry = MockConfigEntry(
+        domain="template_entity_checker",
+        data={"notifications": False},
+    )
+    hass.states.async_set("media_player.present", "idle")
+    hass.states.async_set("media_player.unavailable", "unavailable")
+    scan_sources = [
+        TemplateSource(
+            source_id="tracker-helper-id",
+            helper="Location helper",
+            template_type="device_tracker",
+            template_field="advanced_options.availability",
+            template=("{{ has_value('binary_sensor.availability_missing') }}"),
+        ),
+        TemplateSource(
+            source_id="media-helper-id",
+            helper="Media helper",
+            template_type="binary_sensor",
+            template_field="state",
+            template=(
+                "{{ expand(['media_player.present', "
+                "'media_player.expand_missing', "
+                "'media_player.unavailable', dynamic_player]) }}"
+            ),
+        ),
+    ]
+    monkeypatch.setattr(
+        coordinator_module,
+        "load_template_sources",
+        lambda _hass: (scan_sources, []),
+    )
+    monkeypatch.setattr(
+        coordinator_module,
+        "update_notification",
+        lambda *_args, **_kwargs: None,
+    )
+
+    coordinator = TemplateEntityCheckerCoordinator(hass, entry)
+    result = await coordinator._async_scan()
+
+    assert result["complete"] is True
+    assert result["status"] == "missing_entities"
+    assert result["sources_scanned"] == 2
+    assert result["references_checked"] == 4
+    assert list(result["missing_entities"]) == [
+        "binary_sensor.availability_missing",
+        "media_player.expand_missing",
+    ]
+    assert (
+        result["missing_entities"]["binary_sensor.availability_missing"][0][
+            "template_field"
+        ]
+        == "advanced_options.availability"
+    )
+    assert (
+        result["missing_entities"]["media_player.expand_missing"][0]["template_field"]
+        == "state"
+    )
+    assert [item["code"] for item in result["parser_diagnostics"]] == [
+        "dynamic_entity_reference"
+    ]
+    assert result["template_types_scanned"] == ["binary_sensor", "device_tracker"]
+
+
 async def test_start_scanning_is_idempotent(hass):
     entry = MockConfigEntry(domain="template_entity_checker", data={})
     coordinator = TemplateEntityCheckerCoordinator(hass, entry)
