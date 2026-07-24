@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "template-entity-checker"
-version = "0.1.0"
+version = "0.1.1"
 description = "Find missing static entity references in UI-created Home Assistant Template Helpers"
 readme = "README.md"
 license = {text = "MIT"}
