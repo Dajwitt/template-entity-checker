@@ -4,10 +4,10 @@
   "codeowners": ["@Dajwitt"],
   "config_flow": true,
   "dependencies": ["persistent_notification", "template"],
-  "documentation": "https://github.com/Dajwitt/template-entity-checker",
+  "documentation": "https://dajwitt.github.io/template-entity-checker/",
   "integration_type": "service",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/Dajwitt/template-entity-checker/issues",
   "single_config_entry": true,
-  "version": "0.1.2b1"
+  "version": "0.1.2"
 }

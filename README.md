@@ -12,7 +12,15 @@ Template Entity Checker is a read-only Home Assistant custom integration. It sca
 
 It never renders or changes templates, never repairs references, never guesses dynamic entity IDs, and never reads or writes `.storage` directly.
 
-## Version 0.1.2b1 preview scope
+## Documentation
+
+- [Bilingual GitHub Pages documentation](https://dajwitt.github.io/template-entity-checker/)
+- [English documentation](docs/en/index.md)
+- [Deutsche Dokumentation](docs/de/index.md)
+
+The same sources build the bilingual GitHub Pages site. The generated page is checked in CI so it cannot silently fall behind the Markdown documentation.
+
+## Version 0.1.2
 
 - UI-created Template Helpers represented by Home Assistant `template` Config Entries
 - all 17 UI-created Template Helper types and their confirmed template fields are scanned automatically
@@ -128,13 +136,13 @@ Example structure:
 
 ```yaml
 missing_entities:
-  sensor.thermostat_flur_humidity:
+  sensor.hallway_example_humidity:
     - helper: Average humidity
       source_type: template_helper
       source_id: example_internal_id
       template_field: state
       template_type: sensor
-      reference: "states('sensor.thermostat_flur_humidity')"
+      reference: "states('sensor.hallway_example_humidity')"
       occurrence_count: 1
       locations:
         - line: 4
@@ -155,7 +163,7 @@ A single fixed notification is created for a changed complete result. Identical 
 
 ## Result-changed event
 
-After the first complete scan establishes a baseline, a changed complete result fires:
+After the first complete scan establishes a baseline, a change to the structured active `missing_entities` findings fires:
 
 ```text
 template_entity_checker_result_changed
