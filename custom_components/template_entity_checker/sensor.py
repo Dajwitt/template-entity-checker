@@ -69,6 +69,8 @@ class TemplateEntityCheckerSensor(CoordinatorEntity, SensorEntity):
             "ignored_entities": data.get(
                 "ignored_entities", self.coordinator.ignored_entities
             ),
+            "ignored_helper_label": data.get("ignored_helper_label"),
+            "ignored_helper_sources": data.get("ignored_helper_sources", []),
             "ignored_matches": data.get("ignored_matches", {}),
             "parser_diagnostics": data.get("parser_diagnostics", []),
             "load_errors": data.get("load_errors", []),

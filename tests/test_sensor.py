@@ -12,6 +12,12 @@ class Coordinator:
             "complete": True,
             "missing_entities": {"sensor.missing": []},
             "ignored_matches": {},
+            "ignored_helper_label": {
+                "label_id": "ignore",
+                "name": "Ignore",
+                "available": True,
+            },
+            "ignored_helper_sources": [{"source_id": "helper-id", "helper": "Helper"}],
             "parser_diagnostics": [],
             "load_errors": [],
             "template_types_scanned": ["sensor"],
@@ -36,3 +42,5 @@ def test_sensor_state_and_attributes():
     assert attributes["complete"] is True
     assert attributes["load_errors"] == []
     assert attributes["template_types_scanned"] == ["sensor"]
+    assert attributes["ignored_helper_label"]["name"] == "Ignore"
+    assert attributes["ignored_helper_sources"][0]["source_id"] == "helper-id"

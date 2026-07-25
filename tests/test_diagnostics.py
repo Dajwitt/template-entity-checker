@@ -16,6 +16,11 @@ async def test_diagnostics_include_separate_scan_categories(hass):
             "missing_entities": {},
             "parser_diagnostics": [{"code": "dynamic_entity_reference"}],
             "load_errors": [],
+            "ignored_helper_label": {
+                "label_id": "ignore",
+                "name": "Ignore",
+                "available": True,
+            },
         },
     )
     entry = SimpleNamespace(
@@ -31,3 +36,4 @@ async def test_diagnostics_include_separate_scan_categories(hass):
     assert result["scan"]["parser_diagnostics"][0]["code"] == (
         "dynamic_entity_reference"
     )
+    assert result["scan"]["ignored_helper_label"]["label_id"] == "ignore"

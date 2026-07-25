@@ -81,6 +81,15 @@ def parse_template(
         references.extend(parsed)
         diagnostics.extend(call_diagnostics)
 
+    filter_test_references, filter_test_diagnostics = _has_value_filter_test_references(
+        normalized,
+        template,
+        original_offsets,
+        tokens,
+    )
+    references.extend(filter_test_references)
+    diagnostics.extend(filter_test_diagnostics)
+
     references.extend(
         _dotted_state_references(
             normalized,
@@ -490,7 +499,7 @@ def _syntax_tokens(template: str) -> list[_LocatedToken]:
             active_region = region
         elif token_type in {"variable_end", "block_end"}:
             active_region = None
-        elif token_type in {"name", "operator"} and active_region is not None:
+        elif token_type in {"name", "operator", "string"} and active_region is not None:
             result.append((token_type, value, start, active_region))
     return result
 
@@ -549,6 +558,140 @@ def _is_syntax_name(tokens: list[_LocatedToken], index: int, region: int) -> boo
         and tokens[index - 1][3] == region
         and tokens[index - 1][:2] in {("name", "macro"), ("name", "filter")}
     )
+
+
+def _has_value_filter_test_references(
+    normalized: str,
+    original: str,
+    original_offsets: list[int],
+    tokens: list[_LocatedToken],
+) -> tuple[list[StaticReference], list[ParserDiagnostic]]:
+    """Extract literal operands from genuine `has_value` filters and tests."""
+    references: list[StaticReference] = []
+    diagnostics: list[ParserDiagnostic] = []
+    for index, (token_type, value, start, region) in enumerate(tokens):
+        if token_type != "name" or value != "has_value" or index == 0:
+            continue
+
+        delimiter_index: int | None = None
+        previous = tokens[index - 1]
+        if previous[3] == region and previous[:2] in {
+            ("operator", "|"),
+            ("name", "is"),
+        }:
+            delimiter_index = index - 1
+        elif (
+            previous[3] == region
+            and previous[:2] == ("name", "not")
+            and index > 1
+            and tokens[index - 2][3] == region
+            and tokens[index - 2][:2] == ("name", "is")
+        ):
+            delimiter_index = index - 2
+        if delimiter_index is None or delimiter_index == 0:
+            continue
+
+        operand_token_start, operand_token_end = _filter_test_operand_tokens(
+            tokens, delimiter_index, region
+        )
+        _, _, operand_start, operand_region = tokens[operand_token_start]
+        if operand_region != region:
+            continue
+
+        reference_end = start + len(value)
+        reference = original[
+            original_offsets[operand_start] : original_offsets[reference_end]
+        ]
+        position = _position(normalized, operand_start)
+        operand_end = tokens[operand_token_end][2] + len(tokens[operand_token_end][1])
+        entity_id = _static_string_value(normalized[operand_start:operand_end])
+        if entity_id is None:
+            diagnostics.append(_dynamic_diagnostic(reference, position))
+            continue
+        if not re.fullmatch(_ENTITY, entity_id):
+            diagnostics.append(
+                ParserDiagnostic(
+                    code="invalid_static_entity_id",
+                    message=(
+                        "The has_value operand is a literal but not a valid "
+                        "static entity ID."
+                    ),
+                    reference=reference,
+                    **position,
+                )
+            )
+            continue
+        references.append(
+            StaticReference(
+                entity_id=entity_id,
+                reference=reference,
+                **position,
+            )
+        )
+    return references, diagnostics
+
+
+def _filter_test_operand_tokens(
+    tokens: list[_LocatedToken], delimiter_index: int, region: int
+) -> tuple[int, int]:
+    """Return token bounds for a direct or parenthesized filter/test operand."""
+    operand_end = delimiter_index - 1
+    if tokens[operand_end][:2] != ("operator", ")"):
+        return operand_end, operand_end
+
+    depth = 0
+    for candidate in range(operand_end, -1, -1):
+        token_type, value, _, token_region = tokens[candidate]
+        if token_region != region:
+            break
+        if (token_type, value) == ("operator", ")"):
+            depth += 1
+        elif (token_type, value) == ("operator", "("):
+            depth -= 1
+            if depth == 0:
+                previous = candidate - 1
+                if (
+                    previous >= 0
+                    and tokens[previous][3] == region
+                    and (
+                        (
+                            tokens[previous][0] == "name"
+                            and tokens[previous][1]
+                            not in {
+                                "and",
+                                "or",
+                                "not",
+                                "is",
+                                "in",
+                                "if",
+                                "else",
+                                "for",
+                            }
+                        )
+                        or tokens[previous][:2]
+                        in {("operator", ")"), ("operator", "]")}
+                    )
+                ):
+                    return previous, operand_end
+                return candidate, operand_end
+    return operand_end, operand_end
+
+
+def _static_string_value(expression: str) -> str | None:
+    """Parse one lexer-confirmed Jinja expression without rendering it."""
+    try:
+        parsed = _JINJA_ENVIRONMENT.parse(f"{{{{ {expression} }}}}")
+    except TemplateSyntaxError:  # pragma: no cover - lexer/parser compatibility
+        return None
+    if (
+        len(parsed.body) != 1
+        or not isinstance(parsed.body[0], nodes.Output)
+        or len(parsed.body[0].nodes) != 1
+        or not isinstance(value := parsed.body[0].nodes[0], nodes.Const)
+        or not isinstance(value.value, str)
+    ):
+        return None
+    return value.value
 
 
 def _parse_direct_call(

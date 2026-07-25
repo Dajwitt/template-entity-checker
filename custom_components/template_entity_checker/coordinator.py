@@ -14,11 +14,13 @@ from typing import Any
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers import label_registry as lr
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util import dt as dt_util
 
 from .const import (
     CONF_IGNORED_ENTITIES,
+    CONF_IGNORED_HELPER_LABEL,
     CONF_NOTIFICATIONS,
     CONF_SCAN_INTERVAL,
     DEFAULT_IGNORED_ENTITIES,
@@ -47,6 +49,12 @@ class TemplateEntityCheckerCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             settings.get(CONF_NOTIFICATIONS, DEFAULT_NOTIFICATIONS)
         )
         self.ignored_entities = _configured_ignored_entities(settings)
+        configured_label = settings.get(CONF_IGNORED_HELPER_LABEL)
+        self.ignored_helper_label_id = (
+            configured_label
+            if isinstance(configured_label, str) and configured_label
+            else None
+        )
         self._configured_interval = timedelta(minutes=interval)
         self._scan_lock = asyncio.Lock()
         self._scanning_started = False
@@ -110,8 +118,16 @@ class TemplateEntityCheckerCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         registry = er.async_get(self.hass)
         detected = _missing_entity_findings(references, self.hass.states, registry)
+        ignored_source_ids, ignored_helper_label = _ignored_source_context(
+            self.hass,
+            registry,
+            sources,
+            self.ignored_helper_label_id,
+        )
         missing_entities, ignored_matches = _partition_ignored(
-            detected, set(self.ignored_entities)
+            detected,
+            set(self.ignored_entities),
+            ignored_source_ids,
         )
         scan_time = dt_util.now().isoformat()
         complete = not load_errors
@@ -148,6 +164,18 @@ class TemplateEntityCheckerCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "references_checked": len(references),
             "missing_entities": missing_entities,
             "ignored_entities": self.ignored_entities,
+            "ignored_helper_label": ignored_helper_label,
+            "ignored_helper_sources": [
+                {"source_id": source_id, "helper": helper}
+                for source_id, helper in sorted(
+                    {
+                        source.source_id: source.helper
+                        for source in sources
+                        if source.source_id in ignored_source_ids
+                    }.items(),
+                    key=lambda item: (item[1], item[0]),
+                )
+            ],
             "ignored_matches": ignored_matches,
             "parser_diagnostics": parser_diagnostics,
             "load_errors": load_errors,
@@ -226,12 +254,62 @@ def _missing_entity_findings(
 
 
 def _partition_ignored(
-    detected: dict[str, list[dict[str, Any]]], ignored: set[str]
+    detected: dict[str, list[dict[str, Any]]],
+    ignored: set[str],
+    ignored_source_ids: set[str],
 ) -> tuple[dict[str, list[dict[str, Any]]], dict[str, list[dict[str, Any]]]]:
-    """Separate exact ignored IDs without hiding their findings."""
-    active = {key: value for key, value in detected.items() if key not in ignored}
-    ignored_matches = {key: value for key, value in detected.items() if key in ignored}
+    """Separate exact IDs and source-label matches without hiding findings."""
+    active: dict[str, list[dict[str, Any]]] = {}
+    ignored_matches: dict[str, list[dict[str, Any]]] = {}
+    for entity_id, findings in detected.items():
+        if entity_id in ignored:
+            ignored_matches[entity_id] = findings
+            continue
+        active_findings = [
+            finding
+            for finding in findings
+            if finding.get("source_id") not in ignored_source_ids
+        ]
+        ignored_findings = [
+            finding
+            for finding in findings
+            if finding.get("source_id") in ignored_source_ids
+        ]
+        if active_findings:
+            active[entity_id] = active_findings
+        if ignored_findings:
+            ignored_matches[entity_id] = ignored_findings
     return active, ignored_matches
+
+
+def _ignored_source_context(
+    hass: HomeAssistant,
+    registry: er.EntityRegistry,
+    sources: list[TemplateSource],
+    label_id: str | None,
+) -> tuple[set[str], dict[str, Any] | None]:
+    """Resolve direct helper-entity labels and expose the configured label state."""
+    if label_id is None:
+        return set(), None
+
+    label = lr.async_get(hass).async_get_label(label_id)
+    label_context = {
+        "label_id": label_id,
+        "name": label.name if label is not None else None,
+        "available": label is not None,
+    }
+    if label is None:
+        return set(), label_context
+
+    ignored_source_ids = {
+        source_id
+        for source_id in {source.source_id for source in sources}
+        if any(
+            label_id in entry.labels
+            for entry in er.async_entries_for_config_entry(registry, source_id)
+        )
+    }
+    return ignored_source_ids, label_context
 
 
 def _result_signature(missing_entities: dict[str, Any]) -> str:
