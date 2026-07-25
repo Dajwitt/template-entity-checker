@@ -518,6 +518,23 @@ def test_has_value_filter_does_not_treat_function_result_as_entity_literal():
     assert [item.code for item in diagnostics] == ["dynamic_entity_reference"]
 
 
+@pytest.mark.parametrize(
+    "expression",
+    [
+        "{{ values[('sensor.fake')] | has_value }}",
+        "{{ values[('sensor.fake')] is has_value }}",
+        "{{ values[('sensor.fake')] is not has_value }}",
+        "{{ function(('sensor.fake')) | has_value }}",
+        "{{ (prefix ~ ('sensor.fake')) | has_value }}",
+    ],
+)
+def test_has_value_composite_operands_are_dynamic_and_never_guessed(expression):
+    references, diagnostics = parse_template(expression)
+
+    assert references == []
+    assert [item.code for item in diagnostics] == ["dynamic_entity_reference"]
+
+
 def test_multiple_has_value_filters_preserve_order_and_positions():
     template = "{{ 'sensor.first' | has_value\r\n   and 'sensor.second' | has_value }}"
 
