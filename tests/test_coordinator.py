@@ -10,6 +10,7 @@ from custom_components.template_entity_checker.coordinator import (
     TemplateEntityCheckerCoordinator,
     _configured_ignored_entities,
     _fire_result_changed_event,
+    _ignored_source_context,
     _missing_entity_findings,
     _partition_ignored,
     _result_signature,
@@ -88,9 +89,67 @@ def test_duplicate_findings_are_grouped_with_occurrence_count():
 
 def test_exact_ignore_partition_is_transparent():
     detected = {"sensor.keep": [{}], "sensor.ignore": [{"helper": "x"}]}
-    active, ignored = _partition_ignored(detected, {"sensor.ignore"})
+    active, ignored = _partition_ignored(detected, {"sensor.ignore"}, set())
     assert active == {"sensor.keep": [{}]}
     assert ignored == {"sensor.ignore": [{"helper": "x"}]}
+
+
+def test_label_ignore_partitions_each_source_finding_individually():
+    detected = {
+        "sensor.shared": [
+            {"source_id": "labeled-helper", "helper": "Labeled"},
+            {"source_id": "normal-helper", "helper": "Normal"},
+        ],
+        "sensor.label_only": [{"source_id": "labeled-helper", "helper": "Labeled"}],
+    }
+
+    active, ignored = _partition_ignored(detected, set(), {"labeled-helper"})
+
+    assert active == {
+        "sensor.shared": [{"source_id": "normal-helper", "helper": "Normal"}]
+    }
+    assert ignored == {
+        "sensor.shared": [{"source_id": "labeled-helper", "helper": "Labeled"}],
+        "sensor.label_only": [{"source_id": "labeled-helper", "helper": "Labeled"}],
+    }
+
+
+def test_ignored_source_context_resolves_direct_labels_and_deleted_label(
+    hass, monkeypatch
+):
+    sources = [
+        TemplateSource("labeled", "Labeled", "sensor", "state", ""),
+        TemplateSource("normal", "Normal", "sensor", "state", ""),
+    ]
+    registry = object()
+    label_registry = SimpleNamespace(
+        async_get_label=lambda label_id: (
+            SimpleNamespace(name="Existing ignore") if label_id == "ignore" else None
+        )
+    )
+    monkeypatch.setattr(
+        coordinator_module.lr, "async_get", lambda _hass: label_registry
+    )
+    monkeypatch.setattr(
+        coordinator_module.er,
+        "async_entries_for_config_entry",
+        lambda _registry, source_id: [
+            SimpleNamespace(labels={"ignore"} if source_id == "labeled" else set())
+        ],
+    )
+
+    ignored, context = _ignored_source_context(hass, registry, sources, "ignore")
+
+    assert ignored == {"labeled"}
+    assert context == {
+        "label_id": "ignore",
+        "name": "Existing ignore",
+        "available": True,
+    }
+
+    ignored, context = _ignored_source_context(hass, registry, sources, "deleted")
+    assert ignored == set()
+    assert context == {"label_id": "deleted", "name": None, "available": False}
 
 
 def test_ignore_normalization_is_exact_and_deduplicated():
@@ -194,6 +253,57 @@ async def test_full_scan_separates_results_and_updates_notification(hass, monkey
     unchanged = await coordinator._async_scan()
     assert unchanged["result_signature"] == result["result_signature"]
     assert notifications == []
+
+
+async def test_full_scan_applies_label_ignore_per_source(hass, monkeypatch):
+    entry = MockConfigEntry(
+        domain="template_entity_checker",
+        data={"notifications": False, "ignored_helper_label": "ignore"},
+    )
+    scan_sources = [
+        TemplateSource(
+            "labeled-helper",
+            "Labeled",
+            "sensor",
+            "state",
+            "{{ states('sensor.shared_missing') }}",
+        ),
+        TemplateSource(
+            "normal-helper",
+            "Normal",
+            "sensor",
+            "state",
+            "{{ states('sensor.shared_missing') }}",
+        ),
+    ]
+    monkeypatch.setattr(
+        coordinator_module, "load_template_sources", lambda _hass: (scan_sources, [])
+    )
+    monkeypatch.setattr(
+        coordinator_module,
+        "_ignored_source_context",
+        lambda *_args: (
+            {"labeled-helper"},
+            {"label_id": "ignore", "name": "Ignore", "available": True},
+        ),
+    )
+    monkeypatch.setattr(
+        coordinator_module, "update_notification", lambda *_args, **_kwargs: None
+    )
+
+    result = await TemplateEntityCheckerCoordinator(hass, entry)._async_scan()
+
+    assert [
+        finding["source_id"]
+        for finding in result["missing_entities"]["sensor.shared_missing"]
+    ] == ["normal-helper"]
+    assert [
+        finding["source_id"]
+        for finding in result["ignored_matches"]["sensor.shared_missing"]
+    ] == ["labeled-helper"]
+    assert result["ignored_helper_sources"] == [
+        {"source_id": "labeled-helper", "helper": "Labeled"}
+    ]
 
 
 async def test_partial_source_failure_preserves_notification(hass, monkeypatch):

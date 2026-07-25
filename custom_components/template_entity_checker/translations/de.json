@@ -8,10 +8,12 @@
         "data": {
           "scan_interval": "Prüfintervall (Minuten)",
           "notifications": "Persistente Benachrichtigungen",
-          "ignored_entities": "Exakt zu ignorierende Entity-IDs"
+          "ignored_entities": "Exakt zu ignorierende Entity-IDs",
+          "ignored_helper_label": "Label für ignorierte Template-Helfer"
         },
         "data_description": {
-          "ignored_entities": "Eine exakte Entity-ID pro Zeile. Platzhalter werden nicht unterstützt."
+          "ignored_entities": "Exakte Entity-IDs auswählen oder eingeben. Platzhalter werden nicht unterstützt.",
+          "ignored_helper_label": "Ignoriert Funde aus Template-Helfern, deren Entity dieses Label direkt trägt."
         }
       }
     },
@@ -29,10 +31,12 @@
         "data": {
           "scan_interval": "Prüfintervall (Minuten)",
           "notifications": "Persistente Benachrichtigungen",
-          "ignored_entities": "Exakt zu ignorierende Entity-IDs"
+          "ignored_entities": "Exakt zu ignorierende Entity-IDs",
+          "ignored_helper_label": "Label für ignorierte Template-Helfer"
         },
         "data_description": {
-          "ignored_entities": "Eine exakte Entity-ID pro Zeile. Platzhalter werden nicht unterstützt."
+          "ignored_entities": "Aktuelle Funde auswählen oder exakte Entity-IDs eingeben. Platzhalter werden nicht unterstützt.",
+          "ignored_helper_label": "Ignoriert Funde aus Template-Helfern, deren Entity dieses Label direkt trägt."
         }
       }
     },

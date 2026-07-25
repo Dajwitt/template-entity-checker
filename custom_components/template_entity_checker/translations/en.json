@@ -8,10 +8,12 @@
         "data": {
           "scan_interval": "Scan interval (minutes)",
           "notifications": "Persistent notifications",
-          "ignored_entities": "Exact entity IDs to ignore"
+          "ignored_entities": "Exact entity IDs to ignore",
+          "ignored_helper_label": "Label for ignored Template Helpers"
         },
         "data_description": {
-          "ignored_entities": "One exact entity ID per line. Wildcards are not supported."
+          "ignored_entities": "Select or enter exact entity IDs. Wildcards are not supported.",
+          "ignored_helper_label": "Ignore findings from Template Helpers whose entity has this label directly assigned."
         }
       }
     },
@@ -29,10 +31,12 @@
         "data": {
           "scan_interval": "Scan interval (minutes)",
           "notifications": "Persistent notifications",
-          "ignored_entities": "Exact entity IDs to ignore"
+          "ignored_entities": "Exact entity IDs to ignore",
+          "ignored_helper_label": "Label for ignored Template Helpers"
         },
         "data_description": {
-          "ignored_entities": "One exact entity ID per line. Wildcards are not supported."
+          "ignored_entities": "Select current findings or enter exact entity IDs. Wildcards are not supported.",
+          "ignored_helper_label": "Ignore findings from Template Helpers whose entity has this label directly assigned."
         }
       }
     },

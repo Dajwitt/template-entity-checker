@@ -4,13 +4,14 @@ from homeassistant.const import Platform
 
 DOMAIN = "template_entity_checker"
 NAME = "Template Entity Checker"
-VERSION = "0.1.1"
+VERSION = "0.1.2"
 
 PLATFORMS = [Platform.SENSOR]
 
 CONF_SCAN_INTERVAL = "scan_interval"
 CONF_NOTIFICATIONS = "notifications"
 CONF_IGNORED_ENTITIES = "ignored_entities"
+CONF_IGNORED_HELPER_LABEL = "ignored_helper_label"
 
 DEFAULT_SCAN_INTERVAL = 15
 DEFAULT_NOTIFICATIONS = True

@@ -12,7 +12,15 @@ Template Entity Checker is a read-only Home Assistant custom integration. It sca
 
 It never renders or changes templates, never repairs references, never guesses dynamic entity IDs, and never reads or writes `.storage` directly.
 
-## Version 0.1.1 scope
+## Documentation
+
+- [Bilingual GitHub Pages documentation](https://dajwitt.github.io/template-entity-checker/)
+- [English documentation](docs/en/index.md)
+- [Deutsche Dokumentation](docs/de/index.md)
+
+The same sources build the bilingual GitHub Pages site. The generated page is checked in CI so it cannot silently fall behind the Markdown documentation.
+
+## Version 0.1.2
 
 - UI-created Template Helpers represented by Home Assistant `template` Config Entries
 - all 17 UI-created Template Helper types and their confirmed template fields are scanned automatically
@@ -22,6 +30,10 @@ It never renders or changes templates, never repairs references, never guesses d
 - serialized scans through an async lock
 - expected result entity `sensor.template_entity_checker`
 - exact ignore list and transparent `ignored_matches`
+- searchable multi-select for exact ignored entity IDs, including current findings
+- optional source-level ignore through one freely selected Home Assistant label
+- native Home Assistant toggle for persistent notifications
+- `has_value` function, filter, and Jinja-test forms
 - persistent notification updated only after a changed complete result
 - notification dismissal after a clean complete scan
 - `template_entity_checker_result_changed` event after the baseline changes
@@ -39,6 +51,8 @@ It never renders or changes templates, never repairs references, never guesses d
 {{ states.binary_sensor.example }}
 {{ expand('group.example') }}
 {{ has_value('sensor.example') }}
+{{ 'sensor.example' | has_value }}
+{{ 'sensor.example' is has_value }}
 {{ expand(['sensor.example_one', 'sensor.example_two']) }}
 {{ expand('sensor.example_one', 'sensor.example_two') }}
 ```
@@ -87,9 +101,16 @@ The Config Flow and Options Flow provide:
 
 - scan interval;
 - persistent notification toggle;
-- exact ignored entity IDs, one per line.
+- searchable exact ignored entity IDs with free entry for missing IDs;
+- one optional Home Assistant label for ignoring complete Template Helper sources.
 
 Wildcards are intentionally not supported.
+
+The label must be assigned directly to the entity created by the Template Helper.
+Device and area labels are not inherited. Exact ignored entity IDs remain available
+in parallel for individual missing targets. If the same missing entity is referenced
+by both a labeled and an unlabeled helper, only the labeled helper's finding is
+ignored.
 
 ## Result sensor
 
@@ -100,6 +121,8 @@ The state is the count of unique missing, non-ignored entities. Attributes inclu
 - `missing_entities`
 - `ignored_entities`
 - `ignored_matches`
+- `ignored_helper_label`
+- `ignored_helper_sources`
 - `parser_diagnostics`
 - `load_errors`
 - `template_types_scanned`
@@ -113,13 +136,13 @@ Example structure:
 
 ```yaml
 missing_entities:
-  sensor.thermostat_flur_humidity:
+  sensor.hallway_example_humidity:
     - helper: Average humidity
       source_type: template_helper
       source_id: example_internal_id
       template_field: state
       template_type: sensor
-      reference: "states('sensor.thermostat_flur_humidity')"
+      reference: "states('sensor.hallway_example_humidity')"
       occurrence_count: 1
       locations:
         - line: 4
@@ -140,7 +163,7 @@ A single fixed notification is created for a changed complete result. Identical 
 
 ## Result-changed event
 
-After the first complete scan establishes a baseline, a changed complete result fires:
+After the first complete scan establishes a baseline, a change to the structured active `missing_entities` findings fires:
 
 ```text
 template_entity_checker_result_changed

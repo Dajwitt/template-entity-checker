@@ -459,6 +459,133 @@ def test_has_value_literal_is_static_reference():
     assert diagnostics == []
 
 
+@pytest.mark.parametrize(
+    ("expression", "entity_id"),
+    [
+        ("{{ 'sensor.filter_missing' | has_value }}", "sensor.filter_missing"),
+        ("{{ 'sensor.test_missing' is has_value }}", "sensor.test_missing"),
+        (
+            "{{ 'sensor.negated_test_missing' is not has_value }}",
+            "sensor.negated_test_missing",
+        ),
+    ],
+)
+def test_has_value_filter_and_test_literals_are_static_references(
+    expression, entity_id
+):
+    references, diagnostics = parse_template(expression)
+
+    assert [item.entity_id for item in references] == [entity_id]
+    assert diagnostics == []
+
+
+@pytest.mark.parametrize(
+    ("template", "expected"),
+    [
+        (
+            "{{ ('sensor.parenthesized_filter') | has_value }}",
+            "sensor.parenthesized_filter",
+        ),
+        (
+            "{{ ('sensor.parenthesized_test') is has_value }}",
+            "sensor.parenthesized_test",
+        ),
+        (
+            "{{ ('sensor.parenthesized_negated') is not has_value }}",
+            "sensor.parenthesized_negated",
+        ),
+        (
+            "{{ true and ('sensor.parenthesized_after_and') | has_value }}",
+            "sensor.parenthesized_after_and",
+        ),
+    ],
+)
+def test_has_value_filter_and_test_support_parenthesized_literals(
+    template: str, expected: str
+):
+    references, diagnostics = parse_template(template)
+
+    assert [item.entity_id for item in references] == [expected]
+    assert diagnostics == []
+
+
+def test_has_value_filter_does_not_treat_function_result_as_entity_literal():
+    references, diagnostics = parse_template(
+        "{{ states('sensor.source') | has_value }}"
+    )
+
+    assert [item.entity_id for item in references] == ["sensor.source"]
+    assert [item.code for item in diagnostics] == ["dynamic_entity_reference"]
+
+
+@pytest.mark.parametrize(
+    "expression",
+    [
+        "{{ values[('sensor.fake')] | has_value }}",
+        "{{ values[('sensor.fake')] is has_value }}",
+        "{{ values[('sensor.fake')] is not has_value }}",
+        "{{ function(('sensor.fake')) | has_value }}",
+        "{{ (prefix ~ ('sensor.fake')) | has_value }}",
+    ],
+)
+def test_has_value_composite_operands_are_dynamic_and_never_guessed(expression):
+    references, diagnostics = parse_template(expression)
+
+    assert references == []
+    assert [item.code for item in diagnostics] == ["dynamic_entity_reference"]
+
+
+def test_multiple_has_value_filters_preserve_order_and_positions():
+    template = "{{ 'sensor.first' | has_value\r\n   and 'sensor.second' | has_value }}"
+
+    references, diagnostics = parse_template(template)
+
+    assert [item.entity_id for item in references] == [
+        "sensor.first",
+        "sensor.second",
+    ]
+    assert [item.line for item in references] == [1, 2]
+    assert diagnostics == []
+
+
+@pytest.mark.parametrize(
+    "expression",
+    [
+        "{{ entity_var | has_value }}",
+        "{{ entity_var is has_value }}",
+        "{{ entity_var is not has_value }}",
+    ],
+)
+def test_dynamic_has_value_filter_and_test_are_diagnostic(expression):
+    references, diagnostics = parse_template(expression)
+
+    assert references == []
+    assert [item.code for item in diagnostics] == ["dynamic_entity_reference"]
+
+
+@pytest.mark.parametrize(
+    "expression",
+    [
+        "{{ 'sensor.fake' | states }}",
+        "{{ 'sensor.fake' | state_attr }}",
+        "{{ 'sensor.fake' | is_state }}",
+        "{{ 'sensor.fake' | is_state_attr }}",
+        "{{ 'sensor.fake' | expand }}",
+        "{{ 'sensor.fake' is states }}",
+        "{{ 'sensor.fake' is expand }}",
+    ],
+)
+def test_other_home_assistant_names_remain_ignored_as_filters_or_tests(expression):
+    assert parse_template(expression) == ([], [])
+
+
+def test_has_value_filter_invalid_literal_gets_diagnostic():
+    references, diagnostics = parse_template("{{ 'Not An Entity' | has_value }}")
+
+    assert references == []
+    assert [item.code for item in diagnostics] == ["invalid_static_entity_id"]
+
+
 def test_has_value_variable_is_dynamic_and_never_guessed():
     references, diagnostics = parse_template("{{ has_value(entity_var) }}")
 
