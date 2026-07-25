@@ -11,12 +11,12 @@ from homeassistant.config_entries import (
     ConfigFlowResult,
     OptionsFlow,
 )
-from homeassistant.core import callback, valid_entity_id
+from homeassistant.core import HomeAssistant, callback, valid_entity_id
+from homeassistant.helpers import label_registry as lr
 from homeassistant.helpers.selector import (
     BooleanSelector,
     BooleanSelectorConfig,
-    LabelSelector,
-    LabelSelectorConfig,
+    SelectOptionDict,
     SelectSelector,
     SelectSelectorConfig,
     SelectSelectorMode,
@@ -54,7 +54,10 @@ class TemplateEntityCheckerConfigFlow(ConfigFlow, domain=DOMAIN):
         values = user_input or {}
         return self.async_show_form(
             step_id="user",
-            data_schema=_settings_schema(values),
+            data_schema=_settings_schema(
+                values,
+                label_options=_label_options(self.hass, values),
+            ),
             errors=errors,
         )
 
@@ -89,13 +92,17 @@ class TemplateEntityCheckerOptionsFlow(OptionsFlow):
                     self.config_entry.entry_id,
                     values,
                 ),
+                label_options=_label_options(self.hass, values),
             ),
             errors=errors,
         )
 
 
 def _settings_schema(
-    values: dict[str, Any], *, ignored_options: list[str] | None = None
+    values: dict[str, Any],
+    *,
+    ignored_options: list[str] | None = None,
+    label_options: list[SelectOptionDict] | None = None,
 ) -> vol.Schema:
     """Build the shared config/options schema."""
     ignored = _configured_ignored_entities(values)
@@ -128,7 +135,14 @@ def _settings_schema(
                     mode=SelectSelectorMode.DROPDOWN,
                 )
             ),
-            label_marker: LabelSelector(LabelSelectorConfig(multiple=False)),
+            label_marker: SelectSelector(
+                SelectSelectorConfig(
+                    options=label_options or [],
+                    multiple=False,
+                    custom_value=False,
+                    mode=SelectSelectorMode.DROPDOWN,
+                )
+            ),
         }
     )
 
@@ -145,6 +159,26 @@ def _ignored_entity_options(
         if isinstance(findings, dict):
             options.update(item for item in findings if isinstance(item, str))
     return sorted(options)
+
+
+def _label_options(
+    hass: HomeAssistant, values: dict[str, Any]
+) -> list[SelectOptionDict]:
+    """Return current labels with stable IDs and current display names."""
+    options = [
+        SelectOptionDict(value=label.label_id, label=label.name)
+        for label in lr.async_get(hass).async_list_labels()
+    ]
+    configured = values.get(CONF_IGNORED_HELPER_LABEL)
+    if (
+        isinstance(configured, str)
+        and configured
+        and all(option["value"] != configured for option in options)
+    ):
+        options.append(SelectOptionDict(value=configured, label=configured))
+    return sorted(
+        options, key=lambda option: (option["label"].casefold(), option["value"])
+    )
 
 
 def _validate_input(user_input: dict[str, Any] | None) -> dict[str, str]:

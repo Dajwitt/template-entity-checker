@@ -1,15 +1,16 @@
 """Config and options flow tests."""
 
 from homeassistant import config_entries, data_entry_flow
+from homeassistant.helpers import label_registry as lr
 from homeassistant.helpers.selector import (
     BooleanSelector,
-    LabelSelector,
     SelectSelector,
 )
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.template_entity_checker.const import (
     CONF_IGNORED_ENTITIES,
+    CONF_IGNORED_HELPER_LABEL,
     CONF_NOTIFICATIONS,
     CONF_SCAN_INTERVAL,
     DOMAIN,
@@ -17,6 +18,7 @@ from custom_components.template_entity_checker.const import (
 
 
 async def test_config_flow_creates_entry(hass):
+    label = lr.async_get(hass).async_create("Maintenance Ignore")
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": config_entries.SOURCE_USER}
     )
@@ -27,7 +29,7 @@ async def test_config_flow_creates_entry(hass):
             CONF_SCAN_INTERVAL: 15,
             CONF_NOTIFICATIONS: True,
             CONF_IGNORED_ENTITIES: ["sensor.ignored"],
-            "ignored_helper_label": "maintenance_ignore",
+            CONF_IGNORED_HELPER_LABEL: label.label_id,
         },
     )
     assert result["type"] is data_entry_flow.FlowResultType.CREATE_ENTRY
@@ -72,18 +74,65 @@ async def test_config_flow_uses_modern_selectors(hass):
 
     _, notifications = _schema_field(result, CONF_NOTIFICATIONS)
     _, ignored_entities = _schema_field(result, CONF_IGNORED_ENTITIES)
-    _, ignored_label = _schema_field(result, "ignored_helper_label")
+    _, ignored_label = _schema_field(result, CONF_IGNORED_HELPER_LABEL)
 
     assert isinstance(notifications, BooleanSelector)
     assert isinstance(ignored_entities, SelectSelector)
     assert ignored_entities.config["multiple"] is True
     assert ignored_entities.config["custom_value"] is True
     assert ignored_entities.config["mode"] == "dropdown"
-    assert isinstance(ignored_label, LabelSelector)
+    assert isinstance(ignored_label, SelectSelector)
     assert ignored_label.config["multiple"] is False
+    assert ignored_label.config["custom_value"] is False
+    assert ignored_label.config["mode"] == "dropdown"
+
+
+async def test_label_dropdown_uses_registry_id_and_current_name(hass):
+    registry = lr.async_get(hass)
+    label = registry.async_create("Ignore Helpers")
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={},
+        options={CONF_IGNORED_HELPER_LABEL: label.label_id},
+    )
+    entry.add_to_hass(hass)
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    marker, selector = _schema_field(result, CONF_IGNORED_HELPER_LABEL)
+
+    assert selector.config["options"] == [
+        {"value": label.label_id, "label": "Ignore Helpers"}
+    ]
+    assert marker.description == {"suggested_value": label.label_id}
+
+    registry.async_update(label.label_id, name="Ignored Templates")
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    _, selector = _schema_field(result, CONF_IGNORED_HELPER_LABEL)
+
+    assert selector.config["options"] == [
+        {"value": label.label_id, "label": "Ignored Templates"}
+    ]
+
+
+async def test_label_dropdown_keeps_deleted_configured_id_clearable(hass):
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={},
+        options={CONF_IGNORED_HELPER_LABEL: "removed_label"},
+    )
+    entry.add_to_hass(hass)
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    marker, selector = _schema_field(result, CONF_IGNORED_HELPER_LABEL)
+
+    assert selector.config["options"] == [
+        {"value": "removed_label", "label": "removed_label"}
+    ]
+    assert marker.description == {"suggested_value": "removed_label"}
 
 
 async def test_options_flow_updates_settings(hass):
+    label = lr.async_get(hass).async_create("Maintenance Ignore")
     entry = MockConfigEntry(
         domain=DOMAIN,
         data={
@@ -118,13 +167,13 @@ async def test_options_flow_updates_settings(hass):
             CONF_SCAN_INTERVAL: 30,
             CONF_NOTIFICATIONS: False,
             CONF_IGNORED_ENTITIES: ["sensor.ignored"],
-            "ignored_helper_label": "maintenance_ignore",
+            CONF_IGNORED_HELPER_LABEL: label.label_id,
         },
     )
     assert result["type"] is data_entry_flow.FlowResultType.CREATE_ENTRY
     assert result["data"][CONF_SCAN_INTERVAL] == 30
     assert result["data"][CONF_IGNORED_ENTITIES] == ["sensor.ignored"]
-    assert result["data"]["ignored_helper_label"] == "maintenance_ignore"
+    assert result["data"][CONF_IGNORED_HELPER_LABEL] == label.label_id
     assert "template_types" not in result["data"]
 
 
