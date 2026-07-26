@@ -6,8 +6,6 @@ Template Entity Checker scans Template Helpers created through the Home Assistan
 
 The integration reads Template Helpers through the public Config Entry API. It **never** renders or changes templates, repairs references, guesses dynamic entity IDs, or reads or writes `.storage` files.
 
-> The current public stable version is `0.1.3`.
-
 ## Scope
 
 **UI-created Template Helpers only.** Templates from `configuration.yaml`, `templates.yaml`, packages, or other YAML files are not scanned.

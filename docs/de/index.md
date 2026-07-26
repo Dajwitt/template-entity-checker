@@ -6,8 +6,6 @@ Template Entity Checker prüft über die Benutzeroberfläche erstellte Template-
 
 Die Integration liest Template-Helfer über die öffentliche Config-Entry-API. Sie rendert oder verändert **keine** Templates, repariert keine Referenzen, rät keine dynamischen Entity-IDs und liest oder schreibt keine `.storage`-Dateien.
 
-> Die aktuelle öffentliche stabile Version ist `0.1.3`.
-
 ## Scope
 
 **Nur UI-basierte Template-Helfer.** Templates aus `configuration.yaml`, `templates.yaml`, Packages oder anderen YAML-Dateien werden nicht gescannt.
