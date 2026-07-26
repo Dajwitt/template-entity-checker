@@ -9,6 +9,10 @@ Template Entity Checker is installed as a Home Assistant custom integration. Thi
 
 ## Install through HACS
 
+[Open the custom repository in Home Assistant](https://my.home-assistant.io/redirect/hacs_repository/?owner=Dajwitt&repository=template-entity-checker&category=integration)
+
+If the link does not work:
+
 1. Open **HACS** in Home Assistant.
 2. Open the three-dot menu in the top-right corner.
 3. Select **Custom repositories**.
