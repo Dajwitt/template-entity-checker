@@ -12,6 +12,10 @@ Die Integration liest Template-Helfer über die öffentliche Config-Entry-API. S
 
 **Nur UI-basierte Template-Helfer.** Templates aus `configuration.yaml`, `templates.yaml`, Packages oder anderen YAML-Dateien werden nicht gescannt.
 
+## In Vorbereitung
+
+- durchsuchbare Auswahl für das optionale Helfer-Label; angeboten werden nur vorhandene Home-Assistant-Labels und gespeichert werden kann höchstens eines
+
 ## Neu in 0.1.2
 
 - `has_value` als Funktion, Filter und Jinja-Test

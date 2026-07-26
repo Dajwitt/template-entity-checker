@@ -26,9 +26,11 @@ Use **Label for ignored Template Helpers** when every finding from selected help
 
 1. Create a freely named label in Home Assistant or reuse an existing one.
 2. Assign it directly to the entity created by the Template Helper.
-3. Select that label in the Template Entity Checker options.
+3. Search for and select that label in the Template Entity Checker options.
 
 The label filters the **source**, not the missing target entity. Device and area labels are not inherited.
+
+The selection is searchable, offers existing Home Assistant labels only, and allows at most one label.
 
 ### Per-finding partitioning
 

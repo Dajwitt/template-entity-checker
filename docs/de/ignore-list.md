@@ -26,9 +26,11 @@ Nutze **Label für ignorierte Template-Helfer**, wenn alle Funde aus bestimmten 
 
 1. Lege in Home Assistant ein frei benanntes Label an oder nutze ein vorhandenes.
 2. Weise es direkt der Entity zu, die der Template-Helfer erzeugt.
-3. Wähle dieses Label in den Optionen des Template Entity Checkers.
+3. Suche und wähle dieses Label in den Optionen des Template Entity Checkers.
 
 Das Label filtert die **Quelle**, nicht die fehlende Ziel-Entity. Geräte- und Bereichslabels werden nicht vererbt.
+
+Die Auswahl ist durchsuchbar, bietet nur vorhandene Home-Assistant-Labels an und erlaubt höchstens ein Label.
 
 ### Fundweise Trennung
 

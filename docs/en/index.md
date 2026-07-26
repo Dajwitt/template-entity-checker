@@ -12,6 +12,10 @@ The integration reads Template Helpers through the public Config Entry API. It *
 
 **UI-created Template Helpers only.** Templates from `configuration.yaml`, `templates.yaml`, packages, or other YAML files are not scanned.
 
+## In preparation
+
+- searchable selection for the optional helper label; only existing Home Assistant labels are offered and at most one can be saved
+
 ## New in 0.1.2
 
 - `has_value` as a function, filter, and Jinja test
