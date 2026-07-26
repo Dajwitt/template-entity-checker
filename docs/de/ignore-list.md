@@ -1,7 +1,5 @@
 # Ausschlüsse
 
-> Die durchsuchbare Labelauswahl auf dieser Seite gehört zur unveröffentlichten Preview `0.1.3b1`. Die öffentliche stabile Version `0.1.2` zeigt dafür noch eine nicht durchsuchbare Liste.
-
 Template Entity Checker bietet zwei getrennte, kombinierbare Ausschlüsse. Beide bleiben im Sensor und in der Diagnostik transparent.
 
 ## Exakte fehlende Entity-ID ignorieren

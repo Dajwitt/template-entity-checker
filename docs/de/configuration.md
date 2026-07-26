@@ -2,8 +2,6 @@
 
 Konfiguration und spätere Änderungen erfolgen über Home Assistants Config Flow und Options Flow. Eine YAML-Konfiguration ist nicht erforderlich.
 
-> Diese Seite beschreibt die unveröffentlichte Preview `0.1.3b1`. Die öffentliche stabile Version `0.1.2` besitzt noch keine durchsuchbare Labelauswahl.
-
 ## Ersteinrichtung
 
 Nach Installation und Neustart:

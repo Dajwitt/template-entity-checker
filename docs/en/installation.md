@@ -1,6 +1,6 @@
 # Installation
 
-Template Entity Checker is installed as a Home Assistant custom integration. This documentation describes the unreleased `0.1.3b1` preview; the current public stable version is `0.1.2` and does not include the searchable label selection yet.
+Template Entity Checker is installed as a Home Assistant custom integration. The current public stable version is `0.1.3`.
 
 ## Requirements
 
@@ -27,7 +27,7 @@ Do not add anything to `configuration.yaml`.
 
 ## Manual installation
 
-1. For a stable installation, download the latest release from GitHub. Preview `0.1.3b1` has not been published as a release yet.
+1. Download the latest release from GitHub.
 2. Copy `custom_components/template_entity_checker` to:
 
    ```text

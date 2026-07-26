@@ -28,8 +28,7 @@ English and German user-interface translations are included.
 
 | Version | Status |
 |---|---|
-| `0.1.3b1` | unreleased preview; version documented here |
-| `0.1.2` | current public stable version |
-| `0.1.1` | previous stable version |
+| `0.1.3` | current public stable version |
+| `0.1.2` | previous stable version |
 
-A normal HACS installation offers `0.1.2` as the current stable version. Preview `0.1.3b1` is not available as a release yet.
+A normal HACS installation offers `0.1.3` as the current stable version.

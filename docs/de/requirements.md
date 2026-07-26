@@ -28,8 +28,7 @@ Englische und deutsche Oberflächentexte sind enthalten.
 
 | Version | Stand |
 |---|---|
-| `0.1.3b1` | unveröffentlichte Preview; Stand dieser Dokumentation |
-| `0.1.2` | aktuell veröffentlichte stabile Version |
-| `0.1.1` | vorherige stabile Version |
+| `0.1.3` | aktuell veröffentlichte stabile Version |
+| `0.1.2` | vorherige stabile Version |
 
-Bei einer normalen HACS-Installation wird `0.1.2` als aktuelle stabile Version angeboten. Die Preview `0.1.3b1` ist noch nicht als Release verfügbar.
+Bei einer normalen HACS-Installation wird `0.1.3` als aktuelle stabile Version angeboten.

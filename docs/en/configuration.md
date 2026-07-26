@@ -2,8 +2,6 @@
 
 Initial setup and later changes use Home Assistant's Config Flow and Options Flow. YAML configuration is neither required nor supported.
 
-> This page documents the unreleased `0.1.3b1` preview. The public stable version `0.1.2` does not include searchable label selection yet.
-
 ## Initial setup
 
 After installation and restart:

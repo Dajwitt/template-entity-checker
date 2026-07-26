@@ -20,7 +20,7 @@ It never renders or changes templates, never repairs references, never guesses d
 
 The same sources build the bilingual GitHub Pages site. The generated page is checked in CI so it cannot silently fall behind the Markdown documentation.
 
-## Unreleased
+## Version 0.1.3
 
 - searchable Home Assistant label picker for the optional source-level exclusion; custom values are blocked, a previously saved deleted label remains removable, and at most one label can be saved
 
