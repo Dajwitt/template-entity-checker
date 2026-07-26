@@ -1,5 +1,7 @@
 # Ausschlüsse
 
+> Die durchsuchbare Labelauswahl auf dieser Seite gehört zur unveröffentlichten Preview `0.1.3b1`. Die öffentliche stabile Version `0.1.2` zeigt dafür noch eine nicht durchsuchbare Liste.
+
 Template Entity Checker bietet zwei getrennte, kombinierbare Ausschlüsse. Beide bleiben im Sensor und in der Diagnostik transparent.
 
 ## Exakte fehlende Entity-ID ignorieren
@@ -30,7 +32,7 @@ Nutze **Label für ignorierte Template-Helfer**, wenn alle Funde aus bestimmten 
 
 Das Label filtert die **Quelle**, nicht die fehlende Ziel-Entity. Geräte- und Bereichslabels werden nicht vererbt.
 
-Die Auswahl ist durchsuchbar, bietet nur vorhandene Home-Assistant-Labels an und erlaubt höchstens ein Label.
+Die Auswahl ist durchsuchbar, erlaubt keine freie Eingabe und speichert höchstens ein Label. Angeboten werden aktuelle Home-Assistant-Labels sowie gegebenenfalls die zuvor gespeicherte ID eines gelöschten Labels, damit sie entfernt werden kann.
 
 ### Fundweise Trennung
 

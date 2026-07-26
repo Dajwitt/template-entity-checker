@@ -22,7 +22,7 @@ The same sources build the bilingual GitHub Pages site. The generated page is ch
 
 ## Unreleased
 
-- searchable Home Assistant label picker for the optional source-level exclusion; only existing labels are offered and at most one can be saved
+- searchable Home Assistant label picker for the optional source-level exclusion; custom values are blocked, a previously saved deleted label remains removable, and at most one label can be saved
 
 ## Version 0.1.2
 

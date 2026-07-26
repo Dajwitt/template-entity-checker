@@ -1,5 +1,7 @@
 # Exclusions
 
+> The searchable label selection described on this page belongs to the unreleased `0.1.3b1` preview. Public stable version `0.1.2` still shows a non-searchable list for this field.
+
 Template Entity Checker provides two independent exclusions that can be combined. Both remain transparent in the sensor and diagnostics.
 
 ## Ignore an exact missing entity ID
@@ -30,7 +32,7 @@ Use **Label for ignored Template Helpers** when every finding from selected help
 
 The label filters the **source**, not the missing target entity. Device and area labels are not inherited.
 
-The selection is searchable, offers existing Home Assistant labels only, and allows at most one label.
+The selection is searchable, does not allow custom values, and saves at most one label. It offers current Home Assistant labels and, when necessary, the previously configured ID of a deleted label so it can be cleared.
 
 ### Per-finding partitioning
 

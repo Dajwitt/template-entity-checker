@@ -2,6 +2,8 @@
 
 Initial setup and later changes use Home Assistant's Config Flow and Options Flow. YAML configuration is neither required nor supported.
 
+> This page documents the unreleased `0.1.3b1` preview. The public stable version `0.1.2` does not include searchable label selection yet.
+
 ## Initial setup
 
 After installation and restart:
@@ -12,7 +14,7 @@ After installation and restart:
 4. Set the scan interval in minutes (default: 15).
 5. Enable or disable persistent notifications.
 6. Optionally select exact entity IDs to ignore or freely enter missing IDs.
-7. Optionally search for and select an existing Home Assistant label to ignore complete Template Helper sources.
+7. Optionally search for and select a Home Assistant label to ignore complete Template Helper sources.
 
 ## Settings
 
@@ -21,7 +23,7 @@ After installation and restart:
 | Scan interval | integer (1–1440) | 15 minutes | Time between automatic scans |
 | Notifications | on/off | on | Persistent notification for active findings |
 | Exact entity IDs to ignore | searchable multi-select with custom values | empty | Suppresses the selected missing target IDs completely |
-| Label for ignored Template Helpers | searchable selection of existing labels, at most one | empty | Suppresses findings from helpers whose generated entity directly carries this label |
+| Label for ignored Template Helpers | searchable selection without custom values, at most one | empty | Suppresses findings from helpers whose generated entity directly carries this label |
 
 ## Searchable entity selection
 
@@ -37,7 +39,7 @@ A truly missing entity may no longer exist in the Entity Registry, so any syntac
 
 The optional label is selected from Home Assistant's current Label Registry and stored by its stable label ID.
 
-- The selection is searchable and offers existing labels only.
+- The selection is searchable and does not allow custom values. It offers current labels and, when necessary, the previously configured ID of a deleted label so it can be cleared.
 - At most one label can be saved.
 - Assign the label directly to the entity created by the Template Helper.
 - Device and area labels are not inherited.
