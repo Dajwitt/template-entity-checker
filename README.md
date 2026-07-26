@@ -1,16 +1,21 @@
 # Template Entity Checker
 
-[![Tests](https://github.com/Dajwitt/template-entity-checker/actions/workflows/tests.yml/badge.svg)](https://github.com/Dajwitt/template-entity-checker/actions/workflows/tests.yml)
-[![Home Assistant validation](https://github.com/Dajwitt/template-entity-checker/actions/workflows/validate.yml/badge.svg)](https://github.com/Dajwitt/template-entity-checker/actions/workflows/validate.yml)
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://www.hacs.xyz/docs/faq/custom_repositories/)
+[![Home Assistant validation](https://github.com/Dajwitt/template-entity-checker/actions/workflows/validate.yml/badge.svg)](https://github.com/Dajwitt/template-entity-checker/actions/workflows/validate.yml)
+[![Tests](https://github.com/Dajwitt/template-entity-checker/actions/workflows/tests.yml/badge.svg)](https://github.com/Dajwitt/template-entity-checker/actions/workflows/tests.yml)
 
 Template Entity Checker is a read-only Home Assistant custom integration. It scans templates stored by UI-created Template Helpers and reports static entity references that no longer exist.
 
 > **Scope: UI-created Template Helpers only.** Templates defined in `configuration.yaml`, `templates.yaml`, packages, or other included YAML files are not scanned.
 
+## Why this integration exists
+
 **A focused complement, not a replacement:** Template Entity Checker does not replace Spook or Watchman. It focuses on UI-created Template Helpers and surfaces detailed findings directly in Home Assistant through its sensor and persistent notification as soon as a scan finds them—without opening and working through a separate text report.
 
 It never renders or changes templates, never repairs references, never guesses dynamic entity IDs, and never reads or writes `.storage` directly.
+
+> [!IMPORTANT]
+> This is a stable public release and is not yet included in the default HACS catalog. Install it as a **custom HACS repository** using the instructions below.
 
 ## Documentation
 
@@ -20,11 +25,13 @@ It never renders or changes templates, never repairs references, never guesses d
 
 The same sources build the bilingual GitHub Pages site. The generated page is checked in CI so it cannot silently fall behind the Markdown documentation.
 
-## Version 0.1.3
+## Features
+
+### Added in 0.1.3
 
 - searchable Home Assistant label picker for the optional source-level exclusion; custom values are blocked, a previously saved deleted label remains removable, and at most one label can be saved
 
-## Version 0.1.2
+### Core capabilities introduced in 0.1.2
 
 - UI-created Template Helpers represented by Home Assistant `template` Config Entries
 - all 17 UI-created Template Helper types and their confirmed template fields are scanned automatically
@@ -87,17 +94,38 @@ An entity is missing only when it is absent from both:
 
 Therefore an entity is **not** missing when it is unavailable, unknown, disabled, or currently has no state but still has a registry entry.
 
-## Installation through HACS
+## Installation
 
-This pre-1.0 project is installed as a custom HACS repository:
+### HACS custom repository
 
-1. Open HACS.
-2. Add `https://github.com/Dajwitt/template-entity-checker` as a custom repository of type **Integration**.
-3. Download Template Entity Checker.
-4. Restart Home Assistant.
-5. Open **Settings → Devices & services → Add integration** and select **Template Entity Checker**.
+HACS must already be installed and working.
+
+[![Open your Home Assistant instance and add this repository to HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Dajwitt&repository=template-entity-checker&category=integration)
+
+If the button is not available in your environment:
+
+1. Open **HACS** in Home Assistant.
+2. Open the three-dot menu in the top-right corner.
+3. Select **Custom repositories**.
+4. Enter this repository URL:
+
+   ```text
+   https://github.com/Dajwitt/template-entity-checker
+   ```
+
+5. Select the category **Integration** and add the repository.
+6. Open **Template Entity Checker** in HACS and choose **Download**.
+7. Restart Home Assistant.
+8. Open **Settings → Devices & services → Add integration** and select **Template Entity Checker**.
 
 No `configuration.yaml` entry is required.
+
+### Manual installation
+
+1. Download the latest release from GitHub.
+2. Copy `custom_components/template_entity_checker` to `/config/custom_components/template_entity_checker`.
+3. Restart Home Assistant.
+4. Add **Template Entity Checker** under **Settings → Devices & services**.
 
 ## Configuration
 
@@ -186,6 +214,22 @@ Download diagnostics from **Settings → Devices & services → Template Entity 
 - Templates in automations, scripts, scenes, dashboards, blueprints, and other integrations are not scanned.
 - Jinja is not rendered or semantically executed. Conservative static extraction intentionally misses indirect references.
 - Very large findings may approach Home Assistant's state-attribute size limits. Export and Repairs support are future work.
+
+## Requirements
+
+- Home Assistant 2026.7.3 or newer
+- a current HACS version for HACS installation
+
+## Support
+
+Before opening an issue, confirm that the latest release is installed, run an immediate scan, review the sensor attributes and download the integration diagnostics. Then open an issue at <https://github.com/Dajwitt/template-entity-checker/issues> with clear reproduction steps.
+
+Do not post access tokens, passwords, private Home Assistant URLs or unreviewed diagnostics publicly.
+
+## Release status
+
+- **v0.1.3:** searchable single-label picker for optional source-level exclusion
+- **v0.1.2:** initial stable public feature set for UI-created Template Helpers
 
 ## Development
 

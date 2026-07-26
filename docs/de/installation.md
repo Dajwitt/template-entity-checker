@@ -9,6 +9,10 @@ Template Entity Checker wird als Custom-Integration für Home Assistant installi
 
 ## HACS-Installation
 
+[Custom-Repository in Home Assistant öffnen](https://my.home-assistant.io/redirect/hacs_repository/?owner=Dajwitt&repository=template-entity-checker&category=integration)
+
+Falls der Link nicht funktioniert:
+
 1. Öffne **HACS** in Home Assistant.
 2. Öffne das Dreipunkt-Menü oben rechts.
 3. Wähle **Custom repositories**.
