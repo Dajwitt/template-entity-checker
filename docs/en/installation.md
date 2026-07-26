@@ -1,11 +1,11 @@
 # Installation
 
-Template Entity Checker is installed as a Home Assistant custom integration. The current public stable version is `0.1.2`.
+Template Entity Checker is installed as a Home Assistant custom integration. This documentation describes version `0.1.3`.
 
 ## Requirements
 
 - Home Assistant 2026.7.3 or newer
-- HACS 2.0.0 or newer
+- a current HACS version
 
 ## Install through HACS
 

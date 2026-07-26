@@ -49,7 +49,9 @@ class TemplateEntityCheckerConfigFlow(ConfigFlow, domain=DOMAIN):
 
         errors = _validate_input(user_input) if user_input is not None else {}
         if user_input is not None and not errors:
-            return self.async_create_entry(title=NAME, data=user_input)
+            return self.async_create_entry(
+                title=NAME, data=_normalized_input(user_input)
+            )
 
         values = user_input or {}
         return self.async_show_form(
@@ -78,9 +80,8 @@ class TemplateEntityCheckerOptionsFlow(OptionsFlow):
         current = {**self.config_entry.data, **self.config_entry.options}
         errors = _validate_input(user_input) if user_input is not None else {}
         if user_input is not None and not errors:
-            saved = dict(user_input)
+            saved = _normalized_input(user_input)
             saved.setdefault(CONF_IGNORED_ENTITIES, [])
-            saved.setdefault(CONF_IGNORED_HELPER_LABEL, "")
             return self.async_create_entry(data=saved)
         values = user_input or current
         return self.async_show_form(
@@ -107,12 +108,12 @@ def _settings_schema(
     """Build the shared config/options schema."""
     ignored = _configured_ignored_entities(values)
     options = sorted(set(ignored_options or ()) | set(ignored))
-    ignored_label = values.get(CONF_IGNORED_HELPER_LABEL)
+    ignored_labels = _configured_ignored_helper_labels(values)
     label_marker = vol.Optional(CONF_IGNORED_HELPER_LABEL)
-    if isinstance(ignored_label, str) and ignored_label:
+    if ignored_labels:
         label_marker = vol.Optional(
             CONF_IGNORED_HELPER_LABEL,
-            description={"suggested_value": ignored_label},
+            description={"suggested_value": ignored_labels},
         )
     return vol.Schema(
         {
@@ -138,7 +139,7 @@ def _settings_schema(
             label_marker: SelectSelector(
                 SelectSelectorConfig(
                     options=label_options or [],
-                    multiple=False,
+                    multiple=True,
                     custom_value=False,
                     mode=SelectSelectorMode.DROPDOWN,
                 )
@@ -169,13 +170,9 @@ def _label_options(
         SelectOptionDict(value=label.label_id, label=label.name)
         for label in lr.async_get(hass).async_list_labels()
     ]
-    configured = values.get(CONF_IGNORED_HELPER_LABEL)
-    if (
-        isinstance(configured, str)
-        and configured
-        and all(option["value"] != configured for option in options)
-    ):
-        options.append(SelectOptionDict(value=configured, label=configured))
+    for configured in _configured_ignored_helper_labels(values):
+        if all(option["value"] != configured for option in options):
+            options.append(SelectOptionDict(value=configured, label=configured))
     return sorted(
         options, key=lambda option: (option["label"].casefold(), option["value"])
     )
@@ -191,4 +188,24 @@ def _validate_input(user_input: dict[str, Any] | None) -> dict[str, str]:
         for entity_id in _configured_ignored_entities(user_input)
     ):
         errors[CONF_IGNORED_ENTITIES] = "invalid_entity_id"
+    if len(_configured_ignored_helper_labels(user_input)) > 1:
+        errors[CONF_IGNORED_HELPER_LABEL] = "single_label_only"
     return errors
+
+
+def _configured_ignored_helper_labels(values: dict[str, Any]) -> list[str]:
+    """Return the UI label selection as a list for the searchable picker."""
+    configured = values.get(CONF_IGNORED_HELPER_LABEL)
+    if isinstance(configured, str):
+        return [configured] if configured else []
+    if isinstance(configured, (list, tuple)):
+        return [item for item in configured if isinstance(item, str) and item]
+    return []
+
+
+def _normalized_input(user_input: dict[str, Any]) -> dict[str, Any]:
+    """Keep the persisted label setting backward-compatible as one string."""
+    saved = dict(user_input)
+    labels = _configured_ignored_helper_labels(user_input)
+    saved[CONF_IGNORED_HELPER_LABEL] = labels[0] if labels else ""
+    return saved

@@ -5,7 +5,7 @@
 | Anforderung | Version/Stand |
 |---|---|
 | Home Assistant | 2026.7.3 oder neuer |
-| HACS | 2.0.0 oder neuer für HACS-Installation |
+| HACS | aktuelle Version für HACS-Installation |
 | YAML-Konfiguration | nicht erforderlich und nicht unterstützt |
 
 ## Integration
@@ -28,7 +28,5 @@ Englische und deutsche Oberflächentexte sind enthalten.
 
 | Version | Stand |
 |---|---|
-| `0.1.2` | aktuell veröffentlichte stabile Version |
-| `0.1.1` | vorherige stabile Version |
-
-Bei einer normalen HACS-Installation wird `0.1.2` als aktuelle stabile Version angeboten.
+| `0.1.3` | Stand dieser Dokumentation |
+| `0.1.2` | vorherige stabile Version |
