@@ -13,12 +13,13 @@
         },
         "data_description": {
           "ignored_entities": "Select or enter exact entity IDs. Wildcards are not supported.",
-          "ignored_helper_label": "Ignore findings from Template Helpers whose entity has this label directly assigned."
+          "ignored_helper_label": "Search and select exactly one label. Ignore findings from Template Helpers whose entity has this label directly assigned."
         }
       }
     },
     "error": {
-      "invalid_entity_id": "At least one ignored entity ID is invalid."
+      "invalid_entity_id": "At least one ignored entity ID is invalid.",
+      "single_label_only": "At most one label can be selected."
     },
     "abort": {
       "single_instance_allowed": "Only one instance is supported."
@@ -36,12 +37,13 @@
         },
         "data_description": {
           "ignored_entities": "Select current findings or enter exact entity IDs. Wildcards are not supported.",
-          "ignored_helper_label": "Ignore findings from Template Helpers whose entity has this label directly assigned."
+          "ignored_helper_label": "Search and select exactly one label. Ignore findings from Template Helpers whose entity has this label directly assigned."
         }
       }
     },
     "error": {
-      "invalid_entity_id": "At least one ignored entity ID is invalid."
+      "invalid_entity_id": "At least one ignored entity ID is invalid.",
+      "single_label_only": "At most one label can be selected."
     }
   },
   "services": {

@@ -13,12 +13,13 @@
         },
         "data_description": {
           "ignored_entities": "Exakte Entity-IDs auswählen oder eingeben. Platzhalter werden nicht unterstützt.",
-          "ignored_helper_label": "Ignoriert Funde aus Template-Helfern, deren Entity dieses Label direkt trägt."
+          "ignored_helper_label": "Durchsuchen und genau ein Label auswählen. Ignoriert Funde aus Template-Helfern, deren Entity dieses Label direkt trägt."
         }
       }
     },
     "error": {
-      "invalid_entity_id": "Mindestens eine ignorierte Entity-ID ist ungültig."
+      "invalid_entity_id": "Mindestens eine ignorierte Entity-ID ist ungültig.",
+      "single_label_only": "Es kann höchstens ein Label ausgewählt werden."
     },
     "abort": {
       "single_instance_allowed": "Es wird nur eine Instanz unterstützt."
@@ -36,12 +37,13 @@
         },
         "data_description": {
           "ignored_entities": "Aktuelle Funde auswählen oder exakte Entity-IDs eingeben. Platzhalter werden nicht unterstützt.",
-          "ignored_helper_label": "Ignoriert Funde aus Template-Helfern, deren Entity dieses Label direkt trägt."
+          "ignored_helper_label": "Durchsuchen und genau ein Label auswählen. Ignoriert Funde aus Template-Helfern, deren Entity dieses Label direkt trägt."
         }
       }
     },
     "error": {
-      "invalid_entity_id": "Mindestens eine ignorierte Entity-ID ist ungültig."
+      "invalid_entity_id": "Mindestens eine ignorierte Entity-ID ist ungültig.",
+      "single_label_only": "Es kann höchstens ein Label ausgewählt werden."
     }
   },
   "services": {
