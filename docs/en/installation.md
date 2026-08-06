@@ -1,6 +1,6 @@
 # Installation
 
-Template Entity Checker is installed as a Home Assistant custom integration. This documentation describes version `0.1.3`.
+Template Entity Checker is installed as a Home Assistant custom integration. This documentation describes version `0.1.4`.
 
 ## Requirements
 

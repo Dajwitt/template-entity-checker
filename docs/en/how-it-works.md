@@ -33,7 +33,7 @@ The integration uses Home Assistant's public Config Entry API in read-only mode.
 - no direct `.storage` access
 - no template rendering or execution
 - only confirmed `TemplateSelector` fields
-- confirmed schema versions 1.0 through 1.2
+- confirmed schema versions 1.0 through 1.2 and 2.0 through 2.1
 - unknown or newer schemas are reported in `load_errors` instead of being guessed
 
 ## Supported Template Helper types
@@ -58,7 +58,7 @@ The integration uses Home Assistant's public Config Entry API in read-only mode.
 | `vacuum` | `state`, `fan_speed` |
 | `weather` | `condition`, `humidity`, `temperature`, `forecast_daily`, `forecast_hourly` |
 
-Every type also checks `advanced_options.availability`. A `device_tracker` additionally checks `advanced_options.location_accuracy`. Missing fields are not counted as sources; present but empty fields are counted as scanned sources.
+For schema 1.x, every type also checks `advanced_options.availability`; schema 2.x uses `additional_options.availability`. A `device_tracker` additionally checks `advanced_options.location_accuracy` or `additional_options.location_accuracy`, respectively. Missing fields are not counted as sources; present but empty fields are counted as scanned sources.
 
 ## When is an entity missing?
 

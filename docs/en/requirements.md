@@ -28,5 +28,5 @@ English and German user-interface translations are included.
 
 | Version | Status |
 |---|---|
-| `0.1.3` | version documented here |
-| `0.1.2` | previous stable version |
+| `0.1.4` | version documented here |
+| `0.1.3` | previous stable version |

@@ -1,6 +1,6 @@
 # Template Entity Checker
 
-**Documentation version: 0.1.3** · Home Assistant custom integration
+**Documentation version: 0.1.4** · Home Assistant custom integration
 
 Template Entity Checker scans Template Helpers created through the Home Assistant user interface for static entity references that no longer exist.
 
@@ -9,6 +9,11 @@ The integration reads Template Helpers through the public Config Entry API. It *
 ## Scope
 
 **UI-created Template Helpers only.** Templates from `configuration.yaml`, `templates.yaml`, packages, or other YAML files are not scanned.
+
+## New in 0.1.4
+
+- support for Home Assistant 2026.8 Template Helper Config Entry schema `2.1`
+- large live finding details are no longer stored in Recorder history, while compact scan history remains available
 
 ## New in 0.1.3
 

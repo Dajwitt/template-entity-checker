@@ -33,6 +33,16 @@ class TemplateEntityCheckerSensor(CoordinatorEntity, SensorEntity):
     """Expose the latest scan count and full structured findings."""
 
     entity_description = SENSOR_DESCRIPTION
+    _unrecorded_attributes = frozenset(
+        {
+            "missing_entities",
+            "ignored_entities",
+            "ignored_helper_sources",
+            "ignored_matches",
+            "parser_diagnostics",
+            "load_errors",
+        }
+    )
 
     def __init__(
         self, coordinator: TemplateEntityCheckerCoordinator, entry: ConfigEntry

@@ -99,7 +99,55 @@ def test_stable_2026_7_advanced_options_schema_is_supported():
     ]
 
 
-@pytest.mark.parametrize("version, minor_version", [(1, 3), (2, 1), (3, 0)])
+def test_stable_2026_8_additional_options_schema_is_supported():
+    entry = FakeEntry(
+        version=2,
+        minor_version=1,
+        options={
+            "name": "Current helper",
+            "template_type": "sensor",
+            "state": "{{ states('sensor.current_state') }}",
+            "additional_options": {
+                "availability": "{{ states('sensor.current_availability') }}"
+            },
+            "advanced_options": {
+                "availability": "{{ states('sensor.obsolete_availability') }}"
+            },
+        },
+    )
+
+    sources = _sources_from_entry(entry)
+
+    assert [item.template_field for item in sources] == [
+        "state",
+        "additional_options.availability",
+    ]
+    assert all("sensor.obsolete" not in item.template for item in sources)
+
+
+def test_stable_2026_8_device_tracker_additional_options_are_supported():
+    entry = FakeEntry(
+        version=2,
+        minor_version=1,
+        options={
+            "name": "Current location helper",
+            "template_type": "device_tracker",
+            "additional_options": {
+                "availability": "{{ states('binary_sensor.current_available') }}",
+                "location_accuracy": "{{ states('sensor.current_accuracy') }}",
+            },
+        },
+    )
+
+    sources = _sources_from_entry(entry)
+
+    assert [item.template_field for item in sources] == [
+        "additional_options.availability",
+        "additional_options.location_accuracy",
+    ]
+
+
+@pytest.mark.parametrize("version, minor_version", [(1, 3), (2, 2), (3, 0)])
 def test_unknown_future_entry_schema_becomes_load_error(version, minor_version):
     entry = FakeEntry(version=version, minor_version=minor_version)
     hass = SimpleNamespace(
@@ -182,10 +230,16 @@ def test_device_tracker_has_value_templates_are_loaded_from_confirmed_fields():
         ),
     ],
 )
+@pytest.mark.parametrize(
+    ("version", "minor_version", "section_name"),
+    [
+        (1, 2, "advanced_options"),
+        (2, 1, "additional_options"),
+    ],
+)
 def test_confirmed_template_fields_are_scanned_for_every_helper_type(
-    template_type, root_fields
+    template_type, root_fields, version, minor_version, section_name
 ):
-    section_name = "advanced_options"
     options = {
         "name": f"{template_type} helper",
         "template_type": template_type,
@@ -200,8 +254,8 @@ def test_confirmed_template_fields_are_scanned_for_every_helper_type(
 
     sources = _sources_from_entry(
         FakeEntry(
-            version=1,
-            minor_version=2,
+            version=version,
+            minor_version=minor_version,
             options=options,
         )
     )

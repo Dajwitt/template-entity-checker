@@ -28,5 +28,5 @@ Englische und deutsche Oberflächentexte sind enthalten.
 
 | Version | Stand |
 |---|---|
-| `0.1.3` | Stand dieser Dokumentation |
-| `0.1.2` | vorherige stabile Version |
+| `0.1.4` | Stand dieser Dokumentation |
+| `0.1.3` | vorherige stabile Version |

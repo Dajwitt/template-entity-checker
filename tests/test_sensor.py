@@ -44,3 +44,25 @@ def test_sensor_state_and_attributes():
     assert attributes["template_types_scanned"] == ["sensor"]
     assert attributes["ignored_helper_label"]["name"] == "Ignore"
     assert attributes["ignored_helper_sources"][0]["source_id"] == "helper-id"
+
+
+def test_large_scan_details_are_not_recorded_in_history():
+    assert TemplateEntityCheckerSensor._unrecorded_attributes == frozenset(
+        {
+            "missing_entities",
+            "ignored_entities",
+            "ignored_helper_sources",
+            "ignored_matches",
+            "parser_diagnostics",
+            "load_errors",
+        }
+    )
+    assert TemplateEntityCheckerSensor._unrecorded_attributes.isdisjoint(
+        {
+            "status",
+            "complete",
+            "sources_scanned",
+            "references_checked",
+            "last_scan",
+        }
+    )

@@ -27,6 +27,11 @@ The same sources build the bilingual GitHub Pages site. The generated page is ch
 
 ## Features
 
+### Added in 0.1.4
+
+- compatibility with Home Assistant 2026.8 Template Helper Config Entry schema `2.1`
+- detailed live findings are excluded from Recorder history to prevent the 16,384-byte state-attribute warning while compact scan history remains available
+
 ### Added in 0.1.3
 
 - searchable Home Assistant label picker for the optional source-level exclusion; custom values are blocked, a previously saved deleted label remains removable, and at most one label can be saved
@@ -213,7 +218,7 @@ Download diagnostics from **Settings → Devices & services → Template Entity 
 - YAML-based Template entities are not supported because Home Assistant provides no stable public API for another integration to enumerate all original YAML template sources.
 - Templates in automations, scripts, scenes, dashboards, blueprints, and other integrations are not scanned.
 - Jinja is not rendered or semantically executed. Conservative static extraction intentionally misses indirect references.
-- Very large findings may approach Home Assistant's state-attribute size limits. Export and Repairs support are future work.
+- Detailed findings remain available as live sensor attributes but are not written to Recorder history, preventing oversized attribute rows. Export and Repairs support are future work.
 
 ## Requirements
 
@@ -228,6 +233,7 @@ Do not post access tokens, passwords, private Home Assistant URLs or unreviewed 
 
 ## Release status
 
+- **v0.1.4:** Home Assistant 2026.8 schema compatibility and Recorder-safe detailed findings
 - **v0.1.3:** searchable single-label picker for optional source-level exclusion
 - **v0.1.2:** initial stable public feature set for UI-created Template Helpers
 

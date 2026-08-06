@@ -29,6 +29,10 @@ Die Integration erstellt standardmäßig `sensor.template_entity_checker`. Home 
 | `last_scan` | string/null | ISO-Zeitstempel des letzten Scans |
 | `last_error` | string/null | letzte Coordinator-Exception |
 
+## Recorder-Historie
+
+Die umfangreichen Detailattribute `missing_entities`, `ignored_entities`, `ignored_helper_sources`, `ignored_matches`, `parser_diagnostics` und `load_errors` bleiben am aktuellen Sensorzustand sichtbar, werden aber nicht in der Recorder-Historie gespeichert. Dadurch entstehen keine übergroßen Attributzeilen. Kompakte Werte wie Status, Vollständigkeit, Zähler und Scanzeit bleiben historisch verfügbar.
+
 ## Beispiel: aktiver Fund
 
 ```yaml

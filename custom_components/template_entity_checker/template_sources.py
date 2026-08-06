@@ -12,9 +12,9 @@ from homeassistant.core import HomeAssistant
 from .models import SourceLoadError, TemplateSource
 
 TEMPLATE_DOMAIN = "template"
-SUPPORTED_ENTRY_VERSIONS = {1: 2}
+SUPPORTED_ENTRY_VERSIONS = {1: 2, 2: 1}
 
-# Confirmed TemplateSelector root fields from Home Assistant 2026.7.3.
+# Confirmed TemplateSelector root fields through Home Assistant 2026.8.0.
 TEMPLATE_FIELDS_BY_TYPE: dict[str, tuple[str, ...]] = {
     "alarm_control_panel": ("value_template",),
     "binary_sensor": ("state",),
@@ -49,7 +49,10 @@ TEMPLATE_FIELDS_BY_TYPE: dict[str, tuple[str, ...]] = {
     ),
 }
 
-_NESTED_OPTION_KEY = "advanced_options"
+_NESTED_OPTION_KEYS_BY_VERSION = {
+    1: "advanced_options",
+    2: "additional_options",
+}
 _COMMON_NESTED_TEMPLATE_FIELDS = ("availability",)
 _NESTED_TEMPLATE_FIELDS_BY_TYPE: dict[str, tuple[str, ...]] = {
     "device_tracker": ("location_accuracy",),
@@ -116,7 +119,7 @@ def _sources_from_entry(entry: ConfigEntry) -> list[TemplateSource]:
     nested_fields = _COMMON_NESTED_TEMPLATE_FIELDS + (
         _NESTED_TEMPLATE_FIELDS_BY_TYPE.get(template_type, ())
     )
-    section_name = _NESTED_OPTION_KEY
+    section_name = _NESTED_OPTION_KEYS_BY_VERSION[entry.version]
     section = options.get(section_name)
     if section is not None:
         if not isinstance(section, Mapping):

@@ -29,6 +29,10 @@ The integration normally creates `sensor.template_entity_checker`. Home Assistan
 | `last_scan` | string/null | ISO timestamp of the last scan |
 | `last_error` | string/null | last coordinator exception |
 
+## Recorder history
+
+The large detail attributes `missing_entities`, `ignored_entities`, `ignored_helper_sources`, `ignored_matches`, `parser_diagnostics`, and `load_errors` remain visible on the current sensor state but are not stored in Recorder history. This prevents oversized attribute rows. Compact values such as status, completeness, counts, and scan time remain available historically.
+
 ## Example active finding
 
 ```yaml

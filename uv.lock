@@ -2401,7 +2401,7 @@ wheels = [
 
 [[package]]
 name = "template-entity-checker"
-version = "0.1.3"
+version = "0.1.4"
 source = { virtual = "." }
 
 [package.optional-dependencies]

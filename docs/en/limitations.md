@@ -31,9 +31,9 @@ Templates in automations, scripts, scenes, dashboards, blueprints, and other int
 
 The integration reports problems but never changes or repairs references.
 
-## State attribute size
+## Large live results
 
-Very large result sets can approach Home Assistant's state attribute size limits. Export and Repairs integration are future work.
+Very large result sets remain visible as current sensor attributes but are not stored in Recorder history. Export and Repairs integration are future work.
 
 ## Not considered missing
 

@@ -31,9 +31,9 @@ Templates in Automatisierungen, Scripts, Szenen, Dashboards, Blueprints und ande
 
 Die Integration meldet Probleme, repariert aber keine Referenzen und bietet keine automatischen Reparaturen an.
 
-## Attribut-Größenlimit
+## Umfangreiche Live-Ergebnisse
 
-Sehr große Ergebnisse können das State-Attribut-Größenlimit von Home Assistant erreichen. Export- und Reparatur-Funktionen sind zukünftige Arbeit.
+Sehr große Ergebnisse bleiben als aktuelle Sensorattribute sichtbar, werden aber nicht in der Recorder-Historie gespeichert. Export- und Reparatur-Funktionen sind zukünftige Arbeit.
 
 ## Was NICHT als fehlend gilt
 

@@ -33,7 +33,7 @@ Die Integration nutzt Home Assistants öffentliche Config-Entry-API nur lesend.
 - kein direkter `.storage`-Zugriff
 - kein Rendern oder Ausführen von Templates
 - nur bestätigte `TemplateSelector`-Felder
-- bestätigtes Schema 1.0 bis 1.2
+- bestätigte Schemata 1.0 bis 1.2 und 2.0 bis 2.1
 - neuere oder unbekannte Schemata werden als `load_errors` gemeldet, nicht geraten
 
 ## Unterstützte Template-Helfer-Typen
@@ -58,7 +58,7 @@ Die Integration nutzt Home Assistants öffentliche Config-Entry-API nur lesend.
 | `vacuum` | `state`, `fan_speed` |
 | `weather` | `condition`, `humidity`, `temperature`, `forecast_daily`, `forecast_hourly` |
 
-Bei allen Typen wird zusätzlich `advanced_options.availability` geprüft. Beim `device_tracker` kommt `advanced_options.location_accuracy` hinzu. Nicht vorhandene Felder zählen nicht als Quelle; vorhandene leere Felder werden dagegen als gescannte Quelle gezählt.
+Bei Schema 1.x wird für alle Typen zusätzlich `advanced_options.availability` geprüft; bei Schema 2.x entsprechend `additional_options.availability`. Beim `device_tracker` kommt `advanced_options.location_accuracy` beziehungsweise `additional_options.location_accuracy` hinzu. Nicht vorhandene Felder zählen nicht als Quelle; vorhandene leere Felder werden dagegen als gescannte Quelle gezählt.
 
 ## Wann gilt eine Entity als fehlend?
 
