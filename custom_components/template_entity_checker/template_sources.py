@@ -14,11 +14,18 @@ from .models import SourceLoadError, TemplateSource
 TEMPLATE_DOMAIN = "template"
 SUPPORTED_ENTRY_VERSIONS = {1: 2, 2: 1}
 
-# Confirmed TemplateSelector root fields through Home Assistant 2026.8.0.
+# Confirmed TemplateSelector root fields: HA 2026.11.0b0 and 2026.11.0b1.
 TEMPLATE_FIELDS_BY_TYPE: dict[str, tuple[str, ...]] = {
     "alarm_control_panel": ("value_template",),
     "binary_sensor": ("state",),
     "button": (),
+    "climate": (
+        "hvac_modes",
+        "hvac_mode",
+        "hvac_action",
+        "current_temperature",
+        "target_temperature",
+    ),
     "cover": ("state", "position"),
     "device_tracker": ("in_zones", "latitude", "longitude"),
     "event": ("event_type", "event_types"),
@@ -26,6 +33,13 @@ TEMPLATE_FIELDS_BY_TYPE: dict[str, tuple[str, ...]] = {
     "image": ("url",),
     "light": ("state", "level", "hs", "temperature"),
     "lock": ("state", "code_format"),
+    "media_player": (
+        "state",
+        "volume_level",
+        "is_volume_muted",
+        "source",
+        "source_list",
+    ),
     "number": ("state",),
     "select": ("state", "options"),
     "sensor": ("state",),
@@ -40,6 +54,12 @@ TEMPLATE_FIELDS_BY_TYPE: dict[str, tuple[str, ...]] = {
         "update_percentage",
     ),
     "vacuum": ("state", "fan_speed"),
+    "water_heater": (
+        "operation_list",
+        "operation_mode",
+        "current_temperature",
+        "target_temperature",
+    ),
     "weather": (
         "condition",
         "humidity",
@@ -56,6 +76,7 @@ _NESTED_OPTION_KEYS_BY_VERSION = {
 _COMMON_NESTED_TEMPLATE_FIELDS = ("availability",)
 _NESTED_TEMPLATE_FIELDS_BY_TYPE: dict[str, tuple[str, ...]] = {
     "device_tracker": ("location_accuracy",),
+    "water_heater": ("away_mode",),
 }
 
 

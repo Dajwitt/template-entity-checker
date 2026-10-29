@@ -27,6 +27,13 @@ The same sources build the bilingual GitHub Pages site. The generated page is ch
 
 ## Features
 
+### Unreleased compatibility work
+
+- confirmed TemplateSelector fields for all 20 UI Template Helper types in Home Assistant `2026.11.0b0` and `2026.11.0b1`, including `climate`, `media_player`, and `water_heater`
+- includes `water_heater`'s `additional_options.away_mode` and each type's `additional_options.availability`; action sequences and non-template metadata remain outside the scan scope
+- schema `2.1` remains unchanged; unconfirmed newer schema versions still produce source-load errors
+- this is unreleased compatibility work, not part of the published `v0.1.4` release or a live-instance certification; see [reproducible beta tests](beta_tests/README.md)
+
 ### Added in 0.1.4
 
 - compatibility with Home Assistant 2026.8 Template Helper Config Entry schema `2.1`
@@ -39,7 +46,7 @@ The same sources build the bilingual GitHub Pages site. The generated page is ch
 ### Core capabilities introduced in 0.1.2
 
 - UI-created Template Helpers represented by Home Assistant `template` Config Entries
-- all 17 UI-created Template Helper types and their confirmed template fields are scanned automatically
+- confirmed template fields are scanned automatically (17 types in the published release; 20 in the unreleased compatibility work above)
 - automatic scan after Home Assistant has fully started
 - configurable interval from 1 to 1440 minutes
 - manual `template_entity_checker.scan_now` action
