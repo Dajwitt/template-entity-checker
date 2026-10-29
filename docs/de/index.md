@@ -1,6 +1,6 @@
 # Template Entity Checker
 
-**Dokumentationsstand: Version 0.1.4** · Home Assistant Custom Integration
+**Dokumentationsstand: Version 0.1.5** · Home Assistant Custom Integration
 
 Template Entity Checker prüft über die Benutzeroberfläche erstellte Template-Helfer auf statische Entity-Referenzen, die nicht mehr existieren.
 
@@ -9,6 +9,12 @@ Die Integration liest Template-Helfer über die öffentliche Config-Entry-API. S
 ## Scope
 
 **Nur UI-basierte Template-Helfer.** Templates aus `configuration.yaml`, `templates.yaml`, Packages oder anderen YAML-Dateien werden nicht gescannt.
+
+## Neu in 0.1.5
+
+- 20 bestätigte UI-Template-Helfertypen, neu `climate`, `media_player` und `water_heater`, einschließlich `additional_options.away_mode`
+- Kompatibilität gegen HA `2026.11.0b0` und `2026.11.0b1` geprüft; Home Assistant November bleibt Beta, dieser Integrationsrelease ist regulär
+- Schema `2.1`, UI-only-Grenze und Ausschluss von Aktionen bleiben unverändert; siehe [Teststände und Grenzen](./requirements.md)
 
 ## Neu in 0.1.4
 

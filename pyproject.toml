@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "template-entity-checker"
-version = "0.1.4"
+version = "0.1.5"
 description = "Find missing static entity references in UI-created Home Assistant Template Helpers"
 readme = "README.md"
 license = {text = "MIT"}
@@ -12,14 +12,18 @@ requires-python = ">=3.14.2"
 
 [project.optional-dependencies]
 test = [
-  "homeassistant==2026.7.3",
+  "homeassistant==2026.10.4",
   "pytest>=8.3",
   "pytest-asyncio>=0.25",
   "pytest-cov>=6.0",
-  "pytest-homeassistant-custom-component>=0.13.300",
-  "ruff>=0.11",
+  "pytest-homeassistant-custom-component==0.13.375",
+  "ruff>=0.11"
+]
+typing = [
   "mypy>=1.15",
-  "homeassistant-stubs==2026.7.3"
+  # October stubs change Coordinator/Probatio typing; retain compatible stubs.
+  # Runtime coverage is HA 2026.10.4 plus the separate November beta harness.
+  "homeassistant-stubs==2026.9.2"
 ]
 
 [tool.setuptools.packages.find]
@@ -27,6 +31,7 @@ include = ["custom_components*"]
 
 [tool.uv]
 package = false
+conflicts = [[{ extra = "test" }, { extra = "typing" }]]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
