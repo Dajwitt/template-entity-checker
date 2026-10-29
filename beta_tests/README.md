@@ -1,6 +1,6 @@
-# Home Assistant November compatibility candidate
+# Home Assistant November beta compatibility tests
 
-Unreleased; no version bump or change to Template Config Entry schema 2.1.
+Included in integration 0.1.5; Template Config Entry schema 2.1 is unchanged.
 The allowlist adds these real TemplateSelector fields:
 
 - climate: `hvac_modes`, `hvac_mode`, `hvac_action`, `current_temperature`, `target_temperature`.
@@ -44,9 +44,9 @@ paths also emitted sys.prefix startup warnings; neither run failed.
 
 The complete regular suite separately passed against the existing synchronized
 HA 2026.9.2 environment: 200 passed, 94.66% coverage (gate 90%). Ruff, format,
-mypy, legacy-reference and diff checks passed. Published dependency pins and
-lockfile are unchanged. Additionally, a fresh `uv sync --frozen --extra test`
-environment from the unchanged published lock (HA 2026.7.3) passed the complete
+mypy, legacy-reference and diff checks passed. These are historical candidate
+results, not the current stable test baseline. Additionally, a fresh environment
+from the then-published lock (HA 2026.7.3) passed the complete
 200-test suite with 94.66% coverage in 4.69 s.
 
 ## Boundaries
@@ -59,5 +59,12 @@ The harness uses real Core flow/registry/coordinator/sensor/notification APIs,
 real reload/unload and real 62-second polling. ConfigEntries are synthetic,
 disabled source fixtures, not live user helpers. Dependency components are marked
 ready; no HTTP/frontend/recorder stack, actual template rendering or complete
-Core boot is tested. No live-instance, browser, Marketplace-installation or
-Recorder certification. Schema 2.1 and integration version remain unchanged.
+Core boot is tested. This harness alone does not certify live-instance, browser,
+Marketplace-installation or Recorder behavior. A separate targeted live test on
+b0 passed all three new types, field paths, ignore matches, notification lifecycle
+and options reload; browser rendering and Recorder persistence remain outside
+that acceptance. The regular suite now targets HA 2026.10.4 with plugin 0.13.375;
+type checking runs separately with compatible 2026.9.2 stubs and September Core.
+The latest 2026.10.0 stubs cause Coordinator/Probatio type-contract errors in
+unchanged code; this retained typing pin is not the runtime test baseline.
+Both November versions are beta.

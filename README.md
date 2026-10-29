@@ -27,12 +27,12 @@ The same sources build the bilingual GitHub Pages site. The generated page is ch
 
 ## Features
 
-### Unreleased compatibility work
+### Added in 0.1.5
 
 - confirmed TemplateSelector fields for all 20 UI Template Helper types in Home Assistant `2026.11.0b0` and `2026.11.0b1`, including `climate`, `media_player`, and `water_heater`
 - includes `water_heater`'s `additional_options.away_mode` and each type's `additional_options.availability`; action sequences and non-template metadata remain outside the scan scope
 - schema `2.1` remains unchanged; unconfirmed newer schema versions still produce source-load errors
-- this is unreleased compatibility work, not part of the published `v0.1.4` release or a live-instance certification; see [reproducible beta tests](beta_tests/README.md)
+- regular integration release with compatibility tested against those two HA betas, not a claim that Home Assistant 2026.11 is final; see [reproducible beta tests and boundaries](beta_tests/README.md)
 
 ### Added in 0.1.4
 
@@ -46,7 +46,7 @@ The same sources build the bilingual GitHub Pages site. The generated page is ch
 ### Core capabilities introduced in 0.1.2
 
 - UI-created Template Helpers represented by Home Assistant `template` Config Entries
-- confirmed template fields are scanned automatically (17 types in the published release; 20 in the unreleased compatibility work above)
+- confirmed template fields are scanned automatically (20 types since 0.1.5; 17 through 0.1.4)
 - automatic scan after Home Assistant has fully started
 - configurable interval from 1 to 1440 minutes
 - manual `template_entity_checker.scan_now` action
@@ -232,6 +232,21 @@ Download diagnostics from **Settings → Devices & services → Template Entity 
 - Home Assistant 2026.7.3 or newer
 - a current HACS version for HACS installation
 
+These are minimum requirements, not the latest tested versions. The regular test
+baseline is HA **2026.10.4** with pytest-homeassistant-custom-component **0.13.375**.
+Type checking is isolated on compatible **2026.9.2** stubs: the latest 2026.10.0
+stubs introduce Coordinator/Probatio type-contract errors in unchanged code, and
+the September stubs require September Core. Neither is presented as the runtime
+test version. Separate real-Core tests cover **2026.11.0b0/b1**, both explicitly
+beta. The new helper types, field paths, ignore behavior, notifications and reload
+also passed a targeted live test on b0; browser rendering and Recorder persistence
+were not certified.
+
+The built-in Marketplace in HA 2026.11 beta is separate from HACS. Installation
+of the exact tested candidate through Marketplace was verified on b0, not every
+Marketplace version or UI. Read its community-extension risk notice yourself;
+the HACS instructions above remain the stable installation route.
+
 ## Support
 
 Before opening an issue, confirm that the latest release is installed, run an immediate scan, review the sensor attributes and download the integration diagnostics. Then open an issue at <https://github.com/Dajwitt/template-entity-checker/issues> with clear reproduction steps.
@@ -240,6 +255,7 @@ Do not post access tokens, passwords, private Home Assistant URLs or unreviewed 
 
 ## Release status
 
+- **v0.1.5:** 20 confirmed helper types, including climate, media_player and water_heater; HA November b0/b1 compatibility
 - **v0.1.4:** Home Assistant 2026.8 schema compatibility and Recorder-safe detailed findings
 - **v0.1.3:** searchable single-label picker for optional source-level exclusion
 - **v0.1.2:** initial stable public feature set for UI-created Template Helpers
@@ -251,9 +267,10 @@ Requires Python 3.14.2 or newer and [uv](https://docs.astral.sh/uv/).
 ```bash
 uv sync --extra test
 uv run ruff check custom_components tests scripts
-uv run mypy custom_components/template_entity_checker
 uv run pytest -q --cov=custom_components/template_entity_checker --cov-report=term-missing --cov-fail-under=90
 uv run python scripts/check_legacy_references.py
+uv sync --frozen --extra typing
+uv run --extra typing mypy custom_components/template_entity_checker
 ```
 
 ## License

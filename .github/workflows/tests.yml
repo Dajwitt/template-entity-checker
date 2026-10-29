@@ -19,12 +19,32 @@ jobs:
           python-version: "3.14"
           enable-cache: true
       - name: Install dependencies
-        run: uv sync --extra test
+        run: uv sync --frozen --extra test
       - name: Ruff
         run: uv run ruff check custom_components tests scripts
-      - name: Mypy
-        run: uv run mypy custom_components/template_entity_checker
       - name: Tests and coverage
         run: uv run pytest -q --cov=custom_components/template_entity_checker --cov-report=term-missing --cov-fail-under=90
       - name: Check predecessor references
         run: uv run python scripts/check_legacy_references.py
+      - name: Mypy with isolated compatible stubs (not the runtime baseline)
+        run: |
+          uv sync --frozen --extra typing
+          uv run --extra typing mypy custom_components/template_entity_checker
+
+  november-beta:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        core: ["2026.11.0b0", "2026.11.0b1"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v9.0.0
+        with:
+          python-version: "3.14"
+      - name: Install isolated beta dependencies (no October HA pytest plugin)
+        run: |
+          uv venv .venv-beta
+          uv pip install --python .venv-beta/bin/python "homeassistant==${{ matrix.core }}" "pytest==9.2.0" "pytest-asyncio==1.4.1" "pytest-cov==7.1.0"
+          uv pip check --python .venv-beta/bin/python
+      - name: Pure regressions and real Core harness
+        run: .venv-beta/bin/python -B beta_tests/run.py "$RUNNER_TEMP/beta-evidence"

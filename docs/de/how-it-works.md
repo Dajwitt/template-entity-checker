@@ -43,6 +43,7 @@ Die Integration nutzt Home Assistants öffentliche Config-Entry-API nur lesend.
 | `alarm_control_panel` | `value_template` |
 | `binary_sensor` | `state` |
 | `button` | keine Stammfelder |
+| `climate` | `hvac_modes`, `hvac_mode`, `hvac_action`, `current_temperature`, `target_temperature` |
 | `cover` | `state`, `position` |
 | `device_tracker` | `in_zones`, `latitude`, `longitude` |
 | `event` | `event_type`, `event_types` |
@@ -50,15 +51,21 @@ Die Integration nutzt Home Assistants öffentliche Config-Entry-API nur lesend.
 | `image` | `url` |
 | `light` | `state`, `level`, `hs`, `temperature` |
 | `lock` | `state`, `code_format` |
+| `media_player` | `state`, `volume_level`, `is_volume_muted`, `source`, `source_list` |
 | `number` | `state` |
 | `select` | `state`, `options` |
 | `sensor` | `state` |
 | `switch` | `value_template` |
 | `update` | `installed_version`, `latest_version`, `in_progress`, `release_summary`, `release_url`, `title`, `update_percentage` |
 | `vacuum` | `state`, `fan_speed` |
+| `water_heater` | `operation_list`, `operation_mode`, `current_temperature`, `target_temperature` |
 | `weather` | `condition`, `humidity`, `temperature`, `forecast_daily`, `forecast_hourly` |
 
 Bei Schema 1.x wird für alle Typen zusätzlich `advanced_options.availability` geprüft; bei Schema 2.x entsprechend `additional_options.availability`. Beim `device_tracker` kommt `advanced_options.location_accuracy` beziehungsweise `additional_options.location_accuracy` hinzu. Nicht vorhandene Felder zählen nicht als Quelle; vorhandene leere Felder werden dagegen als gescannte Quelle gezählt.
+
+Seit 0.1.5 wird bei `water_heater` auch `additional_options.away_mode` geprüft.
+Die 20 Typen und exakten TemplateSelector-Pfade wurden gegen HA November
+`2026.11.0b0/b1` (Beta) geprüft; Aktionssequenzen werden nicht gescannt.
 
 ## Wann gilt eine Entity als fehlend?
 

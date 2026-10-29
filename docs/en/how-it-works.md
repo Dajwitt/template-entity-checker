@@ -43,6 +43,7 @@ The integration uses Home Assistant's public Config Entry API in read-only mode.
 | `alarm_control_panel` | `value_template` |
 | `binary_sensor` | `state` |
 | `button` | no root fields |
+| `climate` | `hvac_modes`, `hvac_mode`, `hvac_action`, `current_temperature`, `target_temperature` |
 | `cover` | `state`, `position` |
 | `device_tracker` | `in_zones`, `latitude`, `longitude` |
 | `event` | `event_type`, `event_types` |
@@ -50,15 +51,21 @@ The integration uses Home Assistant's public Config Entry API in read-only mode.
 | `image` | `url` |
 | `light` | `state`, `level`, `hs`, `temperature` |
 | `lock` | `state`, `code_format` |
+| `media_player` | `state`, `volume_level`, `is_volume_muted`, `source`, `source_list` |
 | `number` | `state` |
 | `select` | `state`, `options` |
 | `sensor` | `state` |
 | `switch` | `value_template` |
 | `update` | `installed_version`, `latest_version`, `in_progress`, `release_summary`, `release_url`, `title`, `update_percentage` |
 | `vacuum` | `state`, `fan_speed` |
+| `water_heater` | `operation_list`, `operation_mode`, `current_temperature`, `target_temperature` |
 | `weather` | `condition`, `humidity`, `temperature`, `forecast_daily`, `forecast_hourly` |
 
 For schema 1.x, every type also checks `advanced_options.availability`; schema 2.x uses `additional_options.availability`. A `device_tracker` additionally checks `advanced_options.location_accuracy` or `additional_options.location_accuracy`, respectively. Missing fields are not counted as sources; present but empty fields are counted as scanned sources.
+
+Since 0.1.5, `water_heater` also checks `additional_options.away_mode`.
+The 20 types and exact TemplateSelector paths were checked against HA November
+`2026.11.0b0/b1` (beta); action sequences are not scanned.
 
 ## When is an entity missing?
 
